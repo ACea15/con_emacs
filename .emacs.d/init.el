@@ -27,16 +27,16 @@
   (package-install 'use-package))
 
 ;; ───────────────────────────────────Themes──────────────────────────────────
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 ;(load-theme 'zenburn)
 ;(load-theme 'hc-zenburn t)
 
 
 ;; ───────────────────────────────────Load packages──────────────────────────────────
 
-(use-package hc-zenburn-theme
-  :config
-  (load-theme (quote hc-zenburn) t))
+;; (use-package hc-zenburn-theme
+;;   :config
+;;   (load-theme (quote hc-zenburn) t))
 
 
 (use-package company
@@ -52,6 +52,10 @@
   ;; Use company mode everywhere.
   (global-company-mode t))
 
+(use-package elpy
+  :ensure t
+  :init
+  (elpy-enable))
 
 ; Project management and tools
 (use-package projectile
@@ -68,8 +72,9 @@
   (treemacs-filewatch-mode t)
   (treemacs-git-mode 'extended)
   (treemacs-follow-mode -1)
-  (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1))))
-
+  (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
+  :bind (("C-c C-g C-t" . treemacs)))
+;(bind-key "C-c C-g C-t" treemacs)
 ; Unifies projectile and treemacs
 (use-package treemacs-projectile
   :after (treemacs projectile)
@@ -103,10 +108,10 @@
 (use-package undo-tree
   :ensure t)
 
-(use-package direnv
- :ensure t 
- :config
- (direnv-mode))
+;; (use-package direnv
+;;  :ensure t 
+;;  :config
+;;  (direnv-mode))
 
 (use-package eyebrowse
               :ensure t
@@ -151,13 +156,28 @@
   (interactive)
   (find-file "~/.emacs.d/init.el"))
 
-(bind-key "C-c e" #'open-init-file)
+(bind-key "C-c C-g e" #'open-init-file)
+
+(defun open-bash-file ()
+  "Open this very file."
+  (interactive)
+  (find-file "~/.bashrc"))
+
+(bind-key "C-c C-g b" #'open-bash-file)
+
+(defun open-terminal_tools-file ()
+  "Open this very file."
+  (interactive)
+  (find-file "/mnt/work/lessOns/shScrambled/terminal.org"))
+
+(bind-key "C-c C-g t" #'open-terminal_tools-file)
+
 
 (use-package centaur-tabs
   :ensure t
   :demand
-  :config
-  (centaur-tabs-mode t)
+  ;; :config
+  ;; (centaur-tabs-mode t)
   :custom
   (centaur-tabs-gray-out-icons 'buffer)
   (centaur-tabs-style "rounded")
@@ -165,21 +185,43 @@
   (centaur-tabs-set-icons t)
   (centaur-tabs-set-modified-marker t)
   (centaur-tabs-modified-marker "●")
-  (centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
+  ;(centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
 
   :bind
   (("C-x t" . #'centaur-tabs-backward)
-   ("C-x y" . #'centaur-tabs-forward)))
+   ("C-x y" . #'centaur-tabs-forward))
+   ("C-c C-g a" . #'centaur-tabs-mode))
 
 (use-package json-mode
   :ensure t)
+
+(use-package fill-column-indicator
+  :ensure t)
+;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
+(defvar sanityinc/fci-mode-suppressed nil)
+(make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
+
+(defadvice popup-create (before suppress-fci-mode activate)
+  "Suspend fci-mode while popups are visible"
+  (let ((fci-enabled (sanityinc/fci-enabled-p)))
+    (when fci-enabled
+      (setq sanityinc/fci-mode-suppressed fci-enabled)
+      (turn-off-fci-mode))))
+
+(defadvice popup-delete (after restore-fci-mode activate)
+  "Restore fci-mode when all popups have closed"
+  (when (and sanityinc/fci-mode-suppressed
+	     (null popup-instances))
+    (setq sanityinc/fci-mode-suppressed nil)
+    (turn-on-fci-mode)))
+
+;(require 'fill-column-indicator)
+(setq fci-rule-column 100)
 
 (use-package doom-themes
   :ensure t
   :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
   :init (load-theme 'doom-one t))
-
-
 
 (defun djcb-opacity-modify (&optional dec)
   "modify the transparency of the emacs frame; if DEC is t,
@@ -200,7 +242,17 @@
 
 (require 'ido)
 (ido-mode t)
-(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
+
+;; workon home
+(setenv "WORKON_HOME" "~/anaconda3/envs/")
+(defalias 'workon 'pyvenv-workon)
+
+;(setq python-shell-interpreter "/usr/bin/python3")
+(setq elpy-rpc-backend "jedi")
+;; (setq python-shell-interpreter "ipython"
+;;       python-shell-interpreter-args "-i --simple-prompt")
+(setq elpy-rpc-virtualenv-path 'current)
+;(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
 ;; ───────────────────────────────────Load packages──────────────────────────────────
 
 (setq custom-file "~/.emacs.d/custom-file.el")
