@@ -1,3 +1,5 @@
+
+;; ───────────────────────────────────General settings──────────────────────────────────
 ;; Line highlight and line number
 (global-hl-line-mode t)
 (global-linum-mode t)
@@ -10,7 +12,8 @@
 (tool-bar-mode -1)
 ;(menu-bar-mode -1)
 ;(scroll-bar-mode -1)
-
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
 ;; ─────────────────────────────────── Set up 'package' ───────────────────────────────────
 (require 'package)
 
@@ -31,14 +34,15 @@
 ;(load-theme 'zenburn)
 ;(load-theme 'hc-zenburn t)
 
+(use-package doom-themes
+  :ensure t
+  :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
+  :init (load-theme 'doom-one t))
+
 
 ;; ───────────────────────────────────Load packages──────────────────────────────────
 
-;; (use-package hc-zenburn-theme
-;;   :config
-;;   (load-theme (quote hc-zenburn) t))
-
-
+;; ───────────────────────────────────
 (use-package company
   :ensure t
   ;; Navigate in completion minibuffer with `C-n` and `C-p`.
@@ -48,15 +52,23 @@
   :config
   ;; Provide instant autocompletion.
   (setq company-idle-delay 0.3)
-
   ;; Use company mode everywhere.
   (global-company-mode t))
 
+;; ───────────────────────────────────
 (use-package elpy
   :ensure t
   :init
   (elpy-enable))
 
+;; Enable Flycheck
+(when (require 'flycheck nil t)
+
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+;; ───────────────────────────────────
 ; Project management and tools
 (use-package projectile
   :ensure t
@@ -65,6 +77,8 @@
   :bind (:map projectile-mode-map
               ("s-p" . projectile-command-map)
               ("C-c p" . projectile-command-map)))
+
+;; ───────────────────────────────────
 ; Sidebar navigation with extras
 (use-package treemacs
   :ensure t  
@@ -85,34 +99,38 @@
   :after (treemacs magit)
   :ensure t)
 
-
+;; ───────────────────────────────────
 ;; Git integration for Emacs
 (use-package magit
   :ensure t
   :bind ("C-x g" . magit-status))
 
+;; ───────────────────────────────────
 (use-package shell-pop
   :ensure t
   :bind (("C-t" . shell-pop))
 )
-
 ;; (use-package shell-pop
 ;;   :bind (("C-t" . shell-pop))
 ;;   :config
 ;;   (setq shell-pop-shell-type (quote ("ansi-term" "*ansi-term*" (lambda nil (ansi-term shell-pop-term-shell)))))
-;;   (setq shell-pop-term-shell "/bin/zsh")
+;;   (setq shell-pop-term-shell "/bin/bash")
 ;;   ;; need to do this manually or not picked up by `shell-pop'
 ;;   (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
 
-;; Git integration for Emacs
+;; ───────────────────────────────────
+;; Undo tree
 (use-package undo-tree
   :ensure t)
+(global-undo-tree-mode)
 
+;; ───────────────────────────────────
 ;; (use-package direnv
 ;;  :ensure t 
 ;;  :config
 ;;  (direnv-mode))
 
+;; ───────────────────────────────────
 (use-package eyebrowse
               :ensure t
               :diminish eyebrowse-mode
@@ -124,13 +142,9 @@
                         (eyebrowse-mode t)
                         (setq eyebrowse-new-workspace t)))
 
-(global-set-key (kbd "<C-up>") 'shrink-window)
-(global-set-key (kbd "<C-down>") 'enlarge-window)
-(global-set-key (kbd "C-<") 'shrink-window-horizontally)
-(global-set-key (kbd "C->") 'enlarge-window-horizontally)
 (global-set-key (kbd "C-c C-w w") 'ace-window)
-(global-undo-tree-mode)
 
+;; ───────────────────────────────────
 ;; Move between windows: shit+arrows
 (when (fboundp 'windmove-default-keybindings)
   (windmove-default-keybindings))
@@ -140,39 +154,20 @@
 ;; (global-set-key (kbd "C-c <up>")    'windmove-up)
 ;; (global-set-key (kbd "C-c <down>")  'windmove-down)
 
+;; ───────────────────────────────────
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns x))
   :ensure t
   :config
   (exec-path-from-shell-initialize))
 
+;; ───────────────────────────────────
 (use-package which-key
   :ensure t
   :config
   (which-key-mode))
 
-(defun open-init-file ()
-  "Open this very file."
-  (interactive)
-  (find-file "~/.emacs.d/init.el"))
-
-(bind-key "C-c C-g e" #'open-init-file)
-
-(defun open-bash-file ()
-  "Open this very file."
-  (interactive)
-  (find-file "~/.bashrc"))
-
-(bind-key "C-c C-g b" #'open-bash-file)
-
-(defun open-terminal_tools-file ()
-  "Open this very file."
-  (interactive)
-  (find-file "/mnt/work/lessOns/shScrambled/terminal.org"))
-
-(bind-key "C-c C-g t" #'open-terminal_tools-file)
-
-
+;; ───────────────────────────────────
 (use-package centaur-tabs
   :ensure t
   :demand
@@ -192,36 +187,22 @@
    ("C-x y" . #'centaur-tabs-forward))
    ("C-c C-g a" . #'centaur-tabs-mode))
 
+;; ───────────────────────────────────
 (use-package json-mode
   :ensure t)
 
+;; ───────────────────────────────────
+;; fci-mode 
 (use-package fill-column-indicator
   :ensure t)
-;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
-(defvar sanityinc/fci-mode-suppressed nil)
-(make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
 
-(defadvice popup-create (before suppress-fci-mode activate)
-  "Suspend fci-mode while popups are visible"
-  (let ((fci-enabled (sanityinc/fci-enabled-p)))
-    (when fci-enabled
-      (setq sanityinc/fci-mode-suppressed fci-enabled)
-      (turn-off-fci-mode))))
+;; ───────────────────────────────────
+(require 'ido)
+(ido-mode t)
 
-(defadvice popup-delete (after restore-fci-mode activate)
-  "Restore fci-mode when all popups have closed"
-  (when (and sanityinc/fci-mode-suppressed
-	     (null popup-instances))
-    (setq sanityinc/fci-mode-suppressed nil)
-    (turn-on-fci-mode)))
 
-;(require 'fill-column-indicator)
-(setq fci-rule-column 100)
+;; ───────────────────────────────────Elisp functions──────────────────────────────
 
-(use-package doom-themes
-  :ensure t
-  :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
-  :init (load-theme 'doom-one t))
 
 (defun djcb-opacity-modify (&optional dec)
   "modify the transparency of the emacs frame; if DEC is t,
@@ -240,8 +221,25 @@
 (global-set-key (kbd "C-0") '(lambda()(interactive)
                                                                     (modify-frame-parameters nil `((alpha . 100)))))
 
-(require 'ido)
-(ido-mode t)
+;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
+(defvar sanityinc/fci-mode-suppressed nil)
+(make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
+
+(defadvice popup-create (before suppress-fci-mode activate)
+  "Suspend fci-mode while popups are visible"
+  (let ((fci-enabled (sanityinc/fci-enabled-p)))
+    (when fci-enabled
+      (setq sanityinc/fci-mode-suppressed fci-enabled)
+      (turn-off-fci-mode))))
+
+(defadvice popup-delete (after restore-fci-mode activate)
+  "Restore fci-mode when all popups have closed"
+  (when (and sanityinc/fci-mode-suppressed
+	     (null popup-instances))
+    (setq sanityinc/fci-mode-suppressed nil)
+    (turn-on-fci-mode)))
+
+;; ───────────────────────────────────Environments──────────────────────────────
 
 ;; workon home
 (setenv "WORKON_HOME" "~/anaconda3/envs/")
@@ -252,8 +250,55 @@
 ;; (setq python-shell-interpreter "ipython"
 ;;       python-shell-interpreter-args "-i --simple-prompt")
 (setq elpy-rpc-virtualenv-path 'current)
-;(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
+					;(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
+
+;; (use-package pyvenv
+;;   :ensure t
+;;   :config
+;;   (pyvenv-mode t)
+
+;; Set correct Python interpreter
+(setq pyvenv-post-activate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
+(setq pyvenv-post-deactivate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter "python"))))
+
+;; ───────────────────────────────────Visit files──────────────────────────────
+
+(defun open-init-file ()
+  "Open this very file."
+  (interactive)
+  (find-file "~/.emacs.d/init.el"))
+(bind-key "C-c C-g e" #'open-init-file)
+
+(defun open-bash-file ()
+  "Open this very file."
+  (interactive)
+  (find-file "~/.bashrc"))
+(bind-key "C-c C-g b" #'open-bash-file)
+
+(defun open-terminal_tools-file ()
+  "Open this very file."
+  (interactive)
+  (find-file "/mnt/work/develop/lessOns/shScrambled/terminal.org"))
+(bind-key "C-c C-g t" #'open-terminal_tools-file)
+
+;; ───────────────────────────────────Set command keys──────────────────────────────
+(show-paren-mode 1)
+(define-key comint-mode-map "\C-c\C-o" #'comint-clear-buffer)
+(global-set-key (kbd "C-<") 'shrink-window)
+(global-set-key (kbd "C->") 'enlarge-window)
+(global-set-key (kbd "C-{") 'shrink-window-horizontally)
+(global-set-key (kbd "C-}") 'enlarge-window-horizontally)
+
+;(require 'fill-column-indicator)
+(setq fci-rule-column 100)
+(bind-key "C-c C-g l" 'fci-mode)
+
 ;; ───────────────────────────────────Load packages──────────────────────────────────
 
 (setq custom-file "~/.emacs.d/custom-file.el")
 (load-file custom-file)
+(put 'erase-buffer 'disabled nil)
