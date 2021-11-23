@@ -1,4 +1,8 @@
-
+;; NOTES:
+;;-------
+;; * The first time you load your configuration on a new machine,
+;; you’ll need to run `M-x all-the-icons-install-fonts`
+;; so that mode line icons display correctly.
 ;; ───────────────────────────────────General settings──────────────────────────────────
 ;; Line highlight and line number
 (global-hl-line-mode t)
@@ -14,21 +18,41 @@
 ;(scroll-bar-mode -1)
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
-;; ─────────────────────────────────── Set up 'package' ───────────────────────────────────
+;; ─────────────────────────────────── Set up 'package' (old) ───────────────────────────────────
+;; (require 'package)
+
+;; ;; Add melpa to package archives.
+;; (add-to-list 'package-archives
+;;              '("melpa" . "http://melpa.org/packages/") t)
+;; ;; (add-to-list 'package-archives
+;; ;;              '("melpa" . "https://melpa.org/packages/") t)
+
+;; ;; Load and activate emacs packages. Do this first so that the packages are loaded before
+;; ;; you start trying to modify them.  This also sets the load path.
+;; (package-initialize)
+;; ;; Install 'use-package' if it is not installed.
+;; (when (not (package-installed-p 'use-package))
+;;   (package-refresh-contents)
+;;   (package-install 'use-package))
+
+;; ─────────────────────────────────── Set up 'package'  ───────────────────────────────────
+;; Initialize package sources
 (require 'package)
 
-;; Add melpa to package archives.
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
+(setq package-archives '(("melpa" . "http://melpa.org/packages/")
+                         ("org" . "http://orgmode.org/elpa/")
+                         ("elpa" . "http://elpa.gnu.org/packages/")))
 
-;; Load and activate emacs packages. Do this first so that the packages are loaded before
-;; you start trying to modify them.  This also sets the load path.
 (package-initialize)
-;; Install 'use-package' if it is not installed.
-(when (not (package-installed-p 'use-package))
-  (package-refresh-contents)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+  ;; Initialize use-package on non-Linux platforms
+(unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
+(require 'use-package)
+(setq use-package-always-ensure t)
 ;; ───────────────────────────────────Themes──────────────────────────────────
 ;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 ;(load-theme 'zenburn)
@@ -56,6 +80,15 @@
   (global-company-mode t))
 
 ;; ───────────────────────────────────
+;; (use-package flycheck
+;;   :ensure t
+;;   :init (global-flycheck-mode))
+(use-package flycheck
+  :ensure t
+  :init
+  (global-flycheck-mode t))
+
+;; ───────────────────────────────────
 (use-package elpy
   :ensure t
   :init
@@ -68,6 +101,8 @@
 
   (add-hook 'elpy-mode-hook 'flycheck-mode))
 
+;;(setq flycheck-flake8rc "~/.config/flake8/setup.cfg")
+;;(setq flycheck-pylintrc "~/.config/flake8/.pylintrc")
 ;; ───────────────────────────────────
 ; Project management and tools
 (use-package projectile
@@ -183,24 +218,183 @@
   ;(centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
 
   :bind
-  (("C-x t" . #'centaur-tabs-backward)
-   ("C-x y" . #'centaur-tabs-forward))
+  (("<C-next>" . #'centaur-tabs-backward)
+   ("<C-prior>" . #'centaur-tabs-forward))
    ("C-c C-g a" . #'centaur-tabs-mode))
 
 ;; ───────────────────────────────────
 (use-package json-mode
   :ensure t)
 
+
+(use-package command-log-mode)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Origami - Does code folding, ie hide the body of an
+;; if/else/for/function so that you can fit more code on your screen
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (use-package origami
+;;   :ensure t
+;;   :commands (origami-mode)
+;;   :bind (:map origami-mode-map
+;;               ("C-c o :" . origami-recursively-toggle-node)
+;;               ("C-c o a" . origami-toggle-all-nodes)
+;;               ("C-c o t" . origami-toggle-node)
+;;               ("C-c o o" . origami-show-only-node)
+;;               ("C-c o u" . origami-undo)
+;;               ("C-c o U" . origami-redo)
+;;               ("C-c o C-r" . origami-reset)
+;;               )
+;;   :config
+;;   (setq origami-show-fold-header t)
+;;   ;; The python parser currently doesn't fold if/for/etc. blocks, which is
+;;   ;; something we want. However, the basic indentation parser does support
+;;   ;; this with one caveat: you must toggle the node when your cursor is on
+;;   ;; the line of the if/for/etc. statement you want to collapse. You cannot
+;;   ;; fold the statement by toggling in the body of the if/for/etc.
+;;   (add-to-list 'origami-parser-alist '(python-mode . origami-indent-parser))
+;;   :init
+;;   (add-hook 'prog-mode-hook 'origami-mode)
+;;   )
+
+(add-hook 'prog-mode-hook (lambda () (hs-minor-mode 1)))
+
+(defun hs-hide-all-comments ()
+  "Hide all top level blocks, if they are comments, displaying only first line.
+Move point to the beginning of the line, and run the normal hook
+`hs-hide-hook'.  See documentation for `run-hooks'."
+  (interactive)
+  (hs-life-goes-on
+   (save-excursion
+     (unless hs-allow-nesting
+       (hs-discard-overlays (point-min) (point-max)))
+     (goto-char (point-min))
+     (let ((spew (make-progress-reporter "Hiding all comment blocks..."
+                                         (point-min) (point-max)))
+           (re (concat "\\(" hs-c-start-regexp "\\)")))
+       (while (re-search-forward re (point-max) t)
+         (if (match-beginning 1)
+           ;; found a comment, probably
+           (let ((c-reg (hs-inside-comment-p)))
+             (when (and c-reg (car c-reg))
+               (if (> (count-lines (car c-reg) (nth 1 c-reg)) 1)
+                   (hs-hide-block-at-point t c-reg)
+                 (goto-char (nth 1 c-reg))))))
+         (progress-reporter-update spew (point)))
+       (progress-reporter-done spew)))
+   (beginning-of-line)
+   (run-hooks 'hs-hide-hook)))
 ;; ───────────────────────────────────
 ;; fci-mode 
 (use-package fill-column-indicator
   :ensure t)
+;; ───────────────────────────────────
+;; ibuffer
+
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+;; ───────────────────────────────────
+;; org-mode
+;; (require 'org-bullets)
+;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+(use-package org-bullets
+:ensure t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+;; `with-eval-after-load' macro was introduced in Emacs 24.x
+;; In older Emacsen, you can do the same thing with `eval-after-load'
+;; and '(progn ..) form.
+(with-eval-after-load 'org       
+  (setq org-startup-indented t) ; Enable `org-indent-mode' by default
+  (add-hook 'org-mode-hook #'visual-line-mode))
 
 ;; ───────────────────────────────────
-(require 'ido)
-(ido-mode t)
+;; (require 'ido)
+;; (ido-mode t)
+(use-package ivy
+  :diminish
+  :bind (("C-s" . swiper)
+         :map ivy-minibuffer-map
+         ("TAB" . ivy-alt-done)
+         ("C-l" . ivy-alt-done)
+         ("C-j" . ivy-next-line)
+         ("C-k" . ivy-previous-line)
+         :map ivy-switch-buffer-map
+         ("C-k" . ivy-previous-line)
+         ("C-l" . ivy-done)
+         ("C-d" . ivy-switch-buffer-kill)
+         :map ivy-reverse-i-search-map
+         ("C-k" . ivy-previous-line)
+         ("C-d" . ivy-reverse-i-search-kill))
+  :config
+  (ivy-mode 1))
 
+ (setq ivy-initial-inputs-alist nil)
 
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1))
+
+(use-package counsel
+  :bind (("C-M-j" . 'counsel-switch-buffer)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history))
+  :config
+  (counsel-mode 1))
+
+;; ───────────────────────────────────
+;(use-package all-the-icons)
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 10)))
+;; ───────────────────────────────────
+(use-package dired
+  :ensure nil
+  :commands (dired dired-jump)
+  :bind (("C-x C-j" . dired-jump))
+  :custom ((dired-listing-switches "-agho --group-directories-first"))
+  :config
+  (define-key dired-mode-map
+    (kbd "B") 'dired-single-up-directory)
+  (define-key dired-mode-map
+    (kbd "G") 'dired-single-buffer))
+
+(use-package dired-single)
+
+(use-package dired-hide-dotfiles
+  :hook (dired-mode . dired-hide-dotfiles-mode)
+  :config
+  (define-key dired-mode-map
+    (kbd "C-c h") 'dired-hide-dotfiles-mode))
+
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+;; ───────────────────────────────────
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; flyspell spell checking                                                ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;enable flyspell in text mode (and derived modes)
+(add-hook 'text-mode-hook 'flyspell-mode)
+;;enable flyspell in languages comments
+(add-hook 'prog-mode-hook #'flyspell-prog-mode)
+;;cycle languages
+(setq-default ispell-program-name "aspell")
+(let ((langs '("en_GB" "en_US" "castellano")))
+  (setq lang-ring (make-ring (length langs)))
+  (dolist (elem langs) (ring-insert lang-ring elem)))
+
+(defun cycle-ispell-languages ()
+  (interactive)
+  (let ((lang (ring-ref lang-ring -1)))
+    (ring-insert lang-ring lang)
+    (ispell-change-dictionary lang)))
+
+(global-set-key [f6] 'cycle-ispell-languages)
 ;; ───────────────────────────────────Elisp functions──────────────────────────────
 
 
@@ -239,6 +433,82 @@
     (setq sanityinc/fci-mode-suppressed nil)
     (turn-on-fci-mode)))
 
+;;;;;;;;;;;;;;;;
+;; emacsredux ;;
+;;;;;;;;;;;;;;;;
+(defun er-google ()
+  "Google the selected region if any, display a query prompt otherwise."
+  (interactive)
+  (browse-url
+   (concat
+    "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
+    (url-hexify-string (if mark-active
+         (buffer-substring (region-beginning) (region-end))
+	 (read-string "Google: "))))))
+ (global-set-key (kbd "C-c C-g C-g") #'er-google)
+
+
+(defun smarter-move-beginning-of-line (arg)
+  "Move point back to indentation of beginning of line.
+
+Move point to the first non-whitespace character on this line.
+If point is already there, move to the beginning of the line.
+Effectively toggle between the first non-whitespace character and
+the beginning of the line.
+
+If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+point reaches the beginning or end of the buffer, stop there."
+  (interactive "^p")
+  (setq arg (or arg 1))
+
+  ;; Move lines first
+  (when (/= arg 1)
+    (let ((line-move-visual nil))
+      (forward-line (1- arg))))
+
+  (let ((orig-point (point)))
+    (back-to-indentation)
+    (when (= orig-point (point))
+      (move-beginning-of-line 1))))
+
+;; remap C-a to `smarter-move-beginning-of-line'
+(global-set-key [remap move-beginning-of-line]
+                'smarter-move-beginning-of-line)
+
+
+(defun add-py-debug ()  
+      "add debug code and move line down"  
+    (interactive)  
+    (move-beginning-of-line 1)  
+    (insert "import pdb; pdb.set_trace();\n"))  
+
+(define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
+
+(defun remove-py-debug ()  
+  "remove py debug code, if found"  
+  (interactive)  
+  (let ((x (line-number-at-pos))  
+    (cur (point)))  
+    (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")  
+    (if (= x (line-number-at-pos))  
+    (let ()  
+      (move-beginning-of-line 1)  
+      (kill-line 1)  
+      (move-beginning-of-line 1))  
+      (goto-char cur))))  
+
+;(local-set-key (kbd "<f9>") 'remove-py-debug)
+(define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
+(define-key python-mode-map (kbd "<f8>") '(lambda ()  
+                                 (interactive)   
+                                 (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
+                                 (move-beginning-of-line 1)))
+
+;;; scrollers
+;(global-set-key "\M-+" "\C-u1\C-v")
+;(global-set-key "\M--" "\C-u1\M-v")
+(global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
+(global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
 ;; ───────────────────────────────────Environments──────────────────────────────
 
 ;; workon home
@@ -296,9 +566,34 @@
 ;(require 'fill-column-indicator)
 (setq fci-rule-column 100)
 (bind-key "C-c C-g l" 'fci-mode)
+(bind-key "C-c C-g m" 'menu-bar-mode)
+(menu-bar-mode -1)
+
+(setq org-todo-keywords
+      '((sequence "TODO" "INPROGRESS" "|" "DONE")))
+
+;; ───────────────────────────────────C++──────────────────────────────
+;; snippets and snippet expansion
+(use-package yasnippet
+:ensure t
+:init
+(yas-global-mode 1))
+
+
+;; tags for code navigation
+(use-package ggtags
+:ensure t
+:config
+(add-hook 'c-mode-common-hook
+(lambda ()
+(when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+(ggtags-mode 1))))
+)
+
 
 ;; ───────────────────────────────────Load packages──────────────────────────────────
 
 (setq custom-file "~/.emacs.d/custom-file.el")
 (load-file custom-file)
 (put 'erase-buffer 'disabled nil)
+(put 'dired-find-alternate-file 'disabled nil)
