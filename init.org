@@ -1,0 +1,16 @@
+#+title: Emacs Configuration for Linux Machines
+#+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
+
+
+#+begin_src emacs-lisp :results output silent :tangle no
+  (org-babel-tangle-file "./init_vars.org")
+  (org-babel-tangle-file "./init_setup.org")
+  (org-babel-tangle)
+#+end_src
+
+
+#+begin_src emacs-lisp
+  ;; init emacs 
+  (load "~/.emacs.d/init_vars.el")
+  (load "~/.emacs.d/init_setup.el")
+#+end_src

@@ -1,0 +1,2 @@
+#+title: Emacs Configuration for Linux Machines
+#+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init_setup.el :mkdirp yes
