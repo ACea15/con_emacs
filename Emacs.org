@@ -1,0 +1,1212 @@
+;; #+INCLUDE: "./header.org" src org
+#+SETUPFILE: "./header_setup.org"
+;; #+SETUPFILE: "./local_vars.org"
+;;#+INCLUDE: "./local_vars.org"
+;; #+title: Emacs Configuration for Linux Machines
+;;  #+PROPERTY: header-args:emacs-lisp :tangle /home/ac5015/.emacs.d/init.el :mkdirp yes
+
+
+#+begin_src emacs-lisp
+(defvar *anaconda_env* "~/anaconda3/envs/")
+(defvar *emacs_config* "/home/ac5015/programs/con_emacs/Emacs.org")
+(defvar *bash* "~/.bashrc")
+
+#+end_src
+
+* Let the Emacs begin!
+* 
+This is the configuration we've been building in the *Emacs From Scratch* series, now written as an Org Mode document.  This file generates [[file:init.el][init.el]] which can be loaded by Emacs at startup.
+
+*NOTE:* 
+
+*Credits:* 
+
+https://nilsdeppe.com/posts/emacs-c++-ide2
+http://tuhdo.github.io/c-ide.html#sec-2
+http://tuhdo.github.io/emacs-tutor.html#orgheadline63
+https://stackoverflow.com/questions/3855862/setq-and-defvar-in-lisp
+* Tips for Use
+
+ - The first time you load your configuration on a new machine, you’ll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly.
+* System Setup
+
+** Package manager
+Emacs has a built in package manager but it doesn't make it easy to automatically install packages on a new system the first time you pull down your configuration.  [[https://github.com/jwiegley/use-package][use-package]] is a really helpful package used in this configuration to make it a lot easier to automate the installation and configuration of everything else.
+
+#+begin_src emacs-lisp
+  ;; ─────────────────────────────────── Set up 'package'  ───────────────────────
+  ;; Initialize package sources
+  (require 'package)
+
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ("org" . "https://orgmode.org/elpa/")
+                           ("elpa" . "https://elpa.gnu.org/packages/")))
+
+  (package-initialize)
+  (unless package-archive-contents
+    (package-refresh-contents))
+
+    ;; Initialize use-package on non-Linux platforms
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
+
+  (require 'use-package)
+  (setq use-package-always-ensure t) ;; avoid having to use :ensure t on each 
+                             ;; package. :ensure nil (to disable for a particular package) 
+
+#+end_src
+
+** Local machine variables
+** Tangle
+*** Auto-tangle Configuration Files
+
+This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-config= gets executed each time such a buffer gets saved.  This function checks to see if the file being saved is the Emacs.org file you're looking at right now, and if so, automatically exports the configuration here to the associated output files.
+
+#+BEGIN_SRC emacs-lisp
+
+ ;; Automatically tangle our Emacs.org config file when we save it
+ (defun efs/org-babel-tangle-config ()
+  (when (string-equal (buffer-file-name)
+                      (expand-file-name *emacs_config*))
+    ;; Dynamic scoping to the rescue
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle))))
+
+   (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
+
+#+END_SRC
+
+** Quelpa
+
+#+BEGIN_SRC emacs-lisp
+
+    (unless (package-installed-p 'quelpa)
+      (with-temp-buffer
+        (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+        (eval-buffer)
+        (quelpa-self-upgrade)))
+
+
+  ;; (quelpa
+  ;;  '(quelpa-use-package
+  ;;    :fetcher git
+  ;;    :url "https://github.com/quelpa/quelpa-use-package.git"))
+  ;;(require 'quelpa-use-package)
+#+END_SRC
+* Keybindings and Buffer-Navigation
+
+** Beginning of line
+#+begin_src emacs-lisp
+
+(defun smarter-move-beginning-of-line (arg)
+  "Move point back to indentation of beginning of line.
+
+Move point to the first non-whitespace character on this line.
+If point is already there, move to the beginning of the line.
+Effectively toggle between the first non-whitespace character and
+the beginning of the line.
+
+If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+point reaches the beginning or end of the buffer, stop there."
+  (interactive "^p")
+  (setq arg (or arg 1))
+
+  ;; Move lines first
+  (when (/= arg 1)
+    (let ((line-move-visual nil))
+      (forward-line (1- arg))))
+
+  (let ((orig-point (point)))
+    (back-to-indentation)
+    (when (= orig-point (point))
+      (move-beginning-of-line 1))))
+
+;; remap C-a to `smarter-move-beginning-of-line'
+(global-set-key [remap move-beginning-of-line]
+                'smarter-move-beginning-of-line)
+
+
+#+end_src
+
+** Scrollers
+
+#+begin_src emacs-lisp
+
+(global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
+(global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
+
+#+end_src
+
+** IBuffer
+
+#+begin_src emacs-lisp
+
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+
+#+end_src
+
+** Move between windows
+
+https://www.emacswiki.org/emacs/WindMove
+
+#+begin_src emacs-lisp
+
+;; Move between windows: shit+arrows
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
+
+
+;; Make windmove work in Org mode:
+(add-hook 'org-shiftup-final-hook 'windmove-up)
+(add-hook 'org-shiftleft-final-hook 'windmove-left)
+(add-hook 'org-shiftdown-final-hook 'windmove-down)
+(add-hook 'org-shiftright-final-hook 'windmove-right)
+
+;; (windmove-default-keybindings 'control)
+#+end_src
+
+** Visit files
+
+#+begin_src emacs-lisp
+
+(defun open-init-file ()
+  "Open this very file."
+  (interactive)
+  (find-file *emacs_config*))
+(bind-key "C-c C-g e" #'open-init-file)
+
+(defun open-bash-file ()
+  "Open this very file."
+  (interactive)
+  (find-file *bash*))
+(bind-key "C-c C-g b" #'open-bash-file)
+
+
+#+end_src
+
+** Bookmarks
+
+http://xahlee.info/emacs/emacs/bookmark.html
+
+#+begin_src emacs-lisp
+
+(setq inhibit-splash-screen t)
+(require 'bookmark)
+(list-bookmarks)
+(switch-to-buffer "*Bookmark List*")
+
+#+end_src
+* UI Configuration
+
+** General settings
+#+begin_src emacs-lisp
+
+  ;; ───────────────────────────────────General settings──────────────────────────────────
+  ;; Line highlight and line number
+  (global-hl-line-mode t)
+  (global-linum-mode t)
+  ;; Show column and line number 
+  (line-number-mode t)
+  (column-number-mode t)
+  ;; Do not show the startup screen.
+  (setq inhibit-startup-message t)
+  ;; Disable tool bar, menu bar, scroll bar.
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (show-paren-mode 1) ;; highlight parenthesis
+  ;(menu-bar-mode -1)
+  ;(scroll-bar-mode -1)
+  ;; change all prompts to y or n
+  (fset 'yes-or-no-p 'y-or-n-p)
+    (scroll-bar-mode -1)        ; Disable visible scrollbar
+  ;; (tool-bar-mode -1)          ; Disable the toolbar
+  ;; (tooltip-mode -1)           ; Disable tooltips
+  ;;  (set-fringe-mode 10)        ; Give some breathing room
+  ;; Set up the visible bell
+  (setq visible-bell nil)
+
+#+end_src
+
+*** Transparency of window
+#+begin_src emacs-lisp
+(defun djcb-opacity-modify (&optional dec)
+  "modify the transparency of the emacs frame; if DEC is t,
+    decrease the transparency, otherwise increase it in 10%-steps"
+  (let* ((alpha-or-nil (frame-parameter nil 'alpha)) ; nil before setting
+         (oldalpha (if alpha-or-nil alpha-or-nil 100))
+         (newalpha (if dec (- oldalpha 10) (+ oldalpha 10))))
+    (when (and (>= newalpha frame-alpha-lower-limit) (<= newalpha 100))
+      (modify-frame-parameters nil (list (cons 'alpha newalpha))))))
+
+;; C-8 will increase opacity (== decrease transparency)
+;; C-9 will decrease opacity (== increase transparency
+;; C-0 will returns the state to normal
+(global-set-key (kbd "C-9") '(lambda()(interactive)(djcb-opacity-modify)))
+(global-set-key (kbd "C-8") '(lambda()(interactive)(djcb-opacity-modify t)))
+(global-set-key (kbd "C-0") '(lambda()(interactive)(modify-frame-parameters nil `((alpha . 100)))))
+
+#+end_src
+
+*** Resize windows
+
+#+begin_src emacs-lisp
+
+(global-set-key (kbd "C-<") 'shrink-window)
+(global-set-key (kbd "C->") 'enlarge-window)
+(global-set-key (kbd "C-{") 'shrink-window-horizontally)
+(global-set-key (kbd "C-}") 'enlarge-window-horizontally)
+
+#+end_src
+
+*** Clear terminal buffer
+#+begin_src emacs-lisp
+
+;;(define-key comint-mode-map "\C-c\C-o" #'comint-clear-buffer)
+
+#+end_src
+** Command Log Mode
+
+[[https://github.com/lewang/command-log-mode][command-log-mode]] is useful for displaying a panel showing each key binding you use in a panel on the right side of the frame.
+
+#+begin_src emacs-lisp
+
+(use-package command-log-mode)
+
+#+end_src
+
+** Colour Themes
+
+[[https://github.com/hlissner/emacs-doom-themes][doom-themes]] is a great set of themes with a lot of variety and support for many different Emacs modes.  Taking a look at the [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][screenshots]] might help you decide which one you like best.  You can also run =M-x counsel-load-theme= to choose between them easily.
+
+#+begin_src emacs-lisp
+
+;; ───────────────────────────────────Themes──────────────────────────────────
+;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+;(load-theme 'zenburn)
+;(load-theme 'hc-zenburn t)
+
+(use-package doom-themes
+  :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
+  ;; :init (load-theme 'doom-dracula t)
+  :init (load-theme 'doom-one t)
+)
+
+#+end_src
+
+** Better Modeline
+
+[[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a very attractive and rich (yet still minimal) mode line configuration for Emacs.  The default configuration is quite good but you can check out the [[https://github.com/seagle0128/doom-modeline#customize][configuration options]] for more things you can enable or disable.
+
+*NOTE:* The first time you load your configuration on a new machine, you'll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly.
+
+#+begin_src emacs-lisp
+
+(use-package all-the-icons)
+
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom 
+  (doom-modeline-height 15)
+  (doom-modeline-buffer-file-name-style 'relative-from-project)
+  )
+
+#+end_src
+
+** Which Key
+
+[[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
+
+#+begin_src emacs-lisp
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
+
+#+end_src
+
+** Ivy and Counsel
+
+[[https://oremacs.com/swiper/][Ivy]] is an excellent completion framework for Emacs.  It provides a minimal yet powerful selection menu that appears when you open files, switch buffers, and for many other tasks in Emacs.  Counsel is a customized set of commands to replace `find-file` with `counsel-find-file`, etc which provide useful commands for each of the default completion commands.
+
+[[https://github.com/Yevgnen/ivy-rich][ivy-rich]] adds extra columns to a few of the Counsel commands to provide more information about each item.
+
+#+begin_src emacs-lisp
+
+    (use-package ivy
+      :diminish
+      :bind (("C-s" . swiper)
+             :map ivy-minibuffer-map
+             ("TAB" . ivy-alt-done)
+             ("C-l" . ivy-alt-done)
+             ("C-j" . ivy-next-line)
+             ("C-k" . ivy-previous-line)
+             :map ivy-switch-buffer-map
+             ("C-k" . ivy-previous-line)
+             ("C-l" . ivy-done)
+             ("C-d" . ivy-switch-buffer-kill)
+             :map ivy-reverse-i-search-map
+             ("C-k" . ivy-previous-line)
+             ("C-d" . ivy-reverse-i-search-kill))
+      :config
+      (ivy-mode 1))
+
+    (use-package ivy-rich
+      :init
+      (ivy-rich-mode 1))
+
+    (use-package counsel
+      :bind (("C-M-j" . 'counsel-switch-buffer)
+             :map minibuffer-local-map
+             ("C-r" . 'counsel-minibuffer-history))
+      :config
+      (counsel-mode 1))
+
+#+end_src
+
+** Key bindings
+*** General
+
+#+begin_src emacs-lisp
+  (use-package general)
+
+#+end_src
+
+** Helpful Help Commands
+
+[[https://github.com/Wilfred/helpful][Helpful]] adds a lot of very helpful (get it?) information to Emacs' =describe-= command buffers.  For example, if you use =describe-function=, you will not only get the documentation about the function, you will also see the source code of the function and where it gets used in other places in the Emacs configuration.  It is very useful for figuring out how things work in Emacs.
+
+#+begin_src emacs-lisp
+
+  (use-package helpful)
+
+#+end_src
+
+** Text Scaling
+
+This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
+
+#+begin_src emacs-lisp
+
+  ;; (use-package hydra)
+
+  ;; (defhydra hydra-text-scale (:timeout 4)
+  ;;   "scale text"
+  ;;   ("j" text-scale-increase "in")
+  ;;   ("k" text-scale-decrease "out")
+  ;;   ("f" nil "finished" :exit t))
+
+#+end_src
+
+** Centaur-tabs
+
+#+begin_src emacs-lisp
+;; ───────────────────────────────────
+(use-package centaur-tabs
+  :demand
+  ;; :config
+  ;; (centaur-tabs-mode t)
+  :custom
+  (centaur-tabs-gray-out-icons 'buffer)
+  (centaur-tabs-style "rounded")
+  (centaur-tabs-height 36)
+  (centaur-tabs-set-icons t)
+  (centaur-tabs-set-modified-marker t)
+  (centaur-tabs-modified-marker "●")
+  ;(centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
+
+  :bind
+  (("<C-next>" . #'centaur-tabs-backward)
+   ("<C-prior>" . #'centaur-tabs-forward))
+   ("C-c C-g a" . #'centaur-tabs-mode))
+#+end_src
+** Eyebrowse
+
+#+begin_src emacs-lisp
+;; ───────────────────────────────────
+(use-package eyebrowse
+              :diminish eyebrowse-mode
+              :config (progn
+                        (define-key eyebrowse-mode-map (kbd "C-x C-1") 'eyebrowse-switch-to-window-config-1)
+                        (define-key eyebrowse-mode-map (kbd "C-x C-2") 'eyebrowse-switch-to-window-config-2)
+                        (define-key eyebrowse-mode-map (kbd "C-x C-3") 'eyebrowse-switch-to-window-config-3)
+                        (define-key eyebrowse-mode-map (kbd "C-x C-4") 'eyebrowse-switch-to-window-config-4)
+                        (eyebrowse-mode t)
+                        (setq eyebrowse-new-workspace t)))
+
+(global-set-key (kbd "C-c C-w w") 'ace-window)
+
+#+end_src
+
+** Undo-Tree
+
+#+begin_src emacs-lisp
+
+;; ───────────────────────────────────
+;; Undo tree
+(use-package undo-tree)
+(global-undo-tree-mode)
+
+#+end_src
+
+** fci line
+
+#+begin_src emacs-lisp
+
+;; fci-mode 
+(use-package fill-column-indicator)
+
+;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
+(defvar sanityinc/fci-mode-suppressed nil)
+(make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
+
+(defadvice popup-create (before suppress-fci-mode activate)
+  "Suspend fci-mode while popups are visible"
+  (let ((fci-enabled (sanityinc/fci-enabled-p)))
+    (when fci-enabled
+      (setq sanityinc/fci-mode-suppressed fci-enabled)
+      (turn-off-fci-mode))))
+
+(defadvice popup-delete (after restore-fci-mode activate)
+  "Restore fci-mode when all popups have closed"
+  (when (and sanityinc/fci-mode-suppressed
+	     (null popup-instances))
+    (setq sanityinc/fci-mode-suppressed nil)
+    (turn-on-fci-mode)))
+
+;(require 'fill-column-indicator)
+(setq fci-rule-column 100)
+(bind-key "C-c C-g l" 'fci-mode)
+
+#+end_src
+
+** Dashboard
+
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook)
+    )
+
+  (setq dashboard-items '((recents  . 5)
+                         (bookmarks . 5)
+                         (projects . 5)
+                         (agenda . 5)
+                         (registers . 5))) 
+#+end_src
+* System navigation and output
+
+** Dired
+
+https://www.reddit.com/r/emacs/comments/84thzd/what_happened_to_dired_package/
+https://www.emacswiki.org/emacs/DiredReuseDirectoryBuffer
+http://xahlee.info/emacs/emacs/emacs_dired_tips.html
+
+#+begin_src emacs-lisp
+
+   (use-package dired
+     :ensure nil
+     :commands (dired dired-jump)
+     :bind (("C-x C-j" . dired-jump))
+     :custom 
+     (dired-listing-switches "-agho --group-directories-first")
+     :config
+     ;; (define-key dired-mode-map
+     ;;   (kbd "B") 'dired-single-up-directory)
+     ;; (define-key dired-mode-map
+     ;;   (kbd "G") 'dired-single-buffer)
+     )
+
+   (setq dired-dwim-target t)
+   ;; Revert Dired and other buffers
+   (setq global-auto-revert-non-file-buffers t)
+   ;; (use-package dired-single)
+
+   (use-package dired-hide-dotfiles
+     :hook (dired-mode . dired-hide-dotfiles-mode)
+     :config
+     (define-key dired-mode-map
+       (kbd "C-c h") 'dired-hide-dotfiles-mode))
+
+   (use-package all-the-icons-dired
+     :hook (dired-mode . all-the-icons-dired-mode))
+
+
+  ;; (use-package dired+
+  ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
+  ;;  :defer 1
+  ;;  ;; :init
+  ;;  ;; (setq diredp-hide-details-initially-flag nil)
+  ;;  ;; (setq diredp-hide-details-propagate-flag nil)
+
+  ;;  :config
+  ;;  (diredp-toggle-find-file-reuse-dir 1)
+  ;;  )
+#+end_src
+
+** Print PDF
+
+#+begin_src emacs-lisp
+
+;; print buffer to pdf
+(require 'ps-print)
+(when (executable-find "ps2pdf")
+  (defun modi/pdf-print-buffer-with-faces (&optional filename)
+    "Print file in the current buffer as pdf, including font, color, and
+underline information.  This command works only if you are using a window system,
+so it has a way to determine color values.
+
+C-u COMMAND prompts user where to save the Postscript file (which is then
+converted to PDF at the same location."
+    (interactive (list (if current-prefix-arg
+                           (ps-print-preprint 4)
+                         (concat (file-name-sans-extension (buffer-file-name))
+                                 ".ps"))))
+    (ps-print-with-faces (point-min) (point-max) filename)
+    (shell-command (concat "ps2pdf " filename))
+    (delete-file filename)
+    (message "Deleted %s" filename)
+    (message "Wrote %s" (concat (file-name-sans-extension filename) ".pdf"))))
+
+#+end_src
+
+** Google
+#+begin_src emacs-lisp
+(defun er-google ()
+  "Google the selected region if any, display a query prompt otherwise."
+  (interactive)
+  (browse-url
+   (concat
+    "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
+    (url-hexify-string (if mark-active
+         (buffer-substring (region-beginning) (region-end))
+	 (read-string "Google: "))))))
+ (global-set-key (kbd "C-c C-g C-g") #'er-google)
+
+#+end_src
+* Org Mode
+
+[[https://orgmode.org/][Org Mode]] is one of the hallmark features of Emacs.  It is a rich document editor, project planner, task and time tracker, blogging engine, and literate coding utility all wrapped up in one package.
+
+** Basic Config
+
+#+begin_src emacs-lisp
+
+(use-package org-bullets
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+;; `with-eval-after-load' macro was introduced in Emacs 24.x
+;; In older Emacsen, you can do the same thing with `eval-after-load'
+;; and '(progn ..) form.
+(with-eval-after-load 'org       
+  (setq org-startup-indented t) ; Enable `org-indent-mode' by default
+  (add-hook 'org-mode-hook #'visual-line-mode))
+
+(setq org-todo-keywords
+      '((sequence "TODO" "INPROGRESS" "|" "DONE")))
+
+(setq org-ellipsis " ⤵")
+#+end_src
+
+** Babel
+
+#+begin_src emacs-lisp
+
+    ;; active Babel languages
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((gnuplot . t)
+       (plantuml . t)
+       (python . t)
+       (latex . t)
+       (org . t)
+       (emacs-lisp . t)
+       ))
+    ;; add additional languages with '((language . t)))
+  (setq org-plantuml-jar-path (expand-file-name "/home/alvarocea/Descargas/Developer/plantuml.jar"))
+
+#+end_src
+
+** Plantuml
+
+#+begin_src emacs-lisp
+
+  (use-package plantuml-mode)
+
+#+end_src
+
+** Templates
+
+https://emacs.stackexchange.com/questions/63875/emacs-org-mode-shortcut-to-create-code-block
+#+begin_src emacs-lisp
+  ;; (with-eval-after-load 'org
+  ;;  ((add-to-list 'org-structure-template-alist '("p" . "src python")
+  ;;   add-to-list 'org-structure-template-alist '("i" . "src emacs-elisp")))
+  ;;   )
+#+end_src
+* Development
+
+** General
+*** Shell-pop 
+#+begin_src emacs-lisp
+
+(use-package shell-pop
+  :bind (("C-t" . shell-pop))
+)
+
+#+end_src
+
+*** Flycheck
+
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :init
+    (global-flycheck-mode t))
+  ;; (use-package flycheck
+  ;; :defer t
+  ;; :hook (lsp-mode . flycheck-mode))
+#+end_src
+
+*** Spell checkers
+
+#+begin_src emacs-lisp
+
+;;enable flyspell in text mode (and derived modes)
+(add-hook 'text-mode-hook 'flyspell-mode)
+;;enable flyspell in languages comments
+(add-hook 'prog-mode-hook #'flyspell-prog-mode)
+;;cycle languages
+(setq-default ispell-program-name "aspell")
+(let ((langs '("en_GB" "en_US" "castellano")))
+  (setq lang-ring (make-ring (length langs)))
+  (dolist (elem langs) (ring-insert lang-ring elem)))
+
+(defun cycle-ispell-languages ()
+  (interactive)
+  (let ((lang (ring-ref lang-ring -1)))
+    (ring-insert lang-ring lang)
+    (ispell-change-dictionary lang)))
+
+(global-set-key [f6] 'cycle-ispell-languages)
+
+#+end_src
+
+*** Code folding
+
+#+begin_src emacs-lisp
+(add-hook 'prog-mode-hook (lambda () (hs-minor-mode 1)))
+
+(defun hs-hide-all-comments ()
+  "Hide all top level blocks, if they are comments, displaying only first line.
+Move point to the beginning of the line, and run the normal hook
+`hs-hide-hook'.  See documentation for `run-hooks'."
+  (interactive)
+  (hs-life-goes-on
+   (save-excursion
+     (unless hs-allow-nesting
+       (hs-discard-overlays (point-min) (point-max)))
+     (goto-char (point-min))
+     (let ((spew (make-progress-reporter "Hiding all comment blocks..."
+                                         (point-min) (point-max)))
+           (re (concat "\\(" hs-c-start-regexp "\\)")))
+       (while (re-search-forward re (point-max) t)
+         (if (match-beginning 1)
+           ;; found a comment, probably
+           (let ((c-reg (hs-inside-comment-p)))
+             (when (and c-reg (car c-reg))
+               (if (> (count-lines (car c-reg) (nth 1 c-reg)) 1)
+                   (hs-hide-block-at-point t c-reg)
+                 (goto-char (nth 1 c-reg))))))
+         (progress-reporter-update spew (point)))
+       (progress-reporter-done spew)))
+   (beginning-of-line)
+   (run-hooks 'hs-hide-hook)))
+
+#+end_src
+
+*** LSP
+
+**** lsp-mode
+
+We use the excellent [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] to enable IDE-like functionality for many different programming languages via "language servers" that speak the [[https://microsoft.github.io/language-server-protocol/][Language Server Protocol]].  Before trying to set up =lsp-mode= for a particular language, check out the [[https://emacs-lsp.github.io/lsp-mode/page/languages/][documentation for your language]] so that you can learn which language servers are available and how to install them.
+
+The =lsp-keymap-prefix= setting enables you to define a prefix for where =lsp-mode='s default keybindings will be added.  I *highly recommend* using the prefix to find out what you can do with =lsp-mode= in a buffer.
+
+The =which-key= integration adds helpful descriptions of the various keys so you should be able to learn a lot just by pressing =C-c l= in a =lsp-mode= buffer and trying different things that you find there.
+
+#+begin_src emacs-lisp
+
+    (use-package lsp-mode
+      :commands (lsp lsp-deferred)
+      ;; :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+      ;; (c++-mode . lsp)
+      ;; ;; if you want which-key integration
+      ;; (lsp-mode . lsp-enable-which-key-integration))
+      :init
+      (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+      :config
+      (setq lsp-clients-clangd-args '("-j=4" "-background-index" "-log=error"))
+      ;; (lsp-enable-which-key-integration t)
+      (add-hook 'c++-mode-hook #'lsp)
+      (add-hook 'python-mode-hook #'lsp)
+      (add-hook 'rust-mode-hook #'lsp)
+  )
+
+#+end_src
+
+**** lsp-ui
+
+[[https://emacs-lsp.github.io/lsp-ui/][lsp-ui]] is a set of UI enhancements built on top of =lsp-mode= which make Emacs feel even more like an IDE.  Check out the screenshots on the =lsp-ui= homepage (linked at the beginning of this paragraph) to see examples of what it can do.
+
+#+begin_src emacs-lisp
+  ;; 
+  (use-package lsp-ui
+    :hook (lsp-mode . lsp-ui-mode)
+    :custom
+    (lsp-ui-doc-position 'bottom))
+
+#+end_src
+
+**** lsp-treemacs
+
+[[https://github.com/emacs-lsp/lsp-treemacs][lsp-treemacs]] provides nice tree views for different aspects of your code like symbols in a file, references of a symbol, or diagnostic messages (errors and warnings) that are found in your code.
+
+Try these commands with =M-x=:
+
+- =lsp-treemacs-symbols= - Show a tree view of the symbols in the current file
+- =lsp-treemacs-references= - Show a tree view for the references of the symbol under the cursor
+- =lsp-treemacs-error-list= - Show a tree view for the diagnostic messages in the project
+
+This package is built on the [[https://github.com/Alexander-Miller/treemacs][treemacs]] package which might be of some interest to you if you like to have a file browser at the left side of your screen in your editor.
+
+#+begin_src emacs-lisp
+  ;; 
+  (use-package lsp-treemacs
+    :after lsp)
+
+#+end_src
+
+**** lsp-ivy
+
+[[https://github.com/emacs-lsp/lsp-ivy][lsp-ivy]] integrates Ivy with =lsp-mode= to make it easy to search for things by name in your code.  When you run these commands, a prompt will appear in the minibuffer allowing you to type part of the name of a symbol in your code.  Results will be populated in the minibuffer so that you can find what you're looking for and jump to that location in the code upon selecting the result.
+
+Try these commands with =M-x=:
+
+- =lsp-ivy-workspace-symbol= - Search for a symbol name in the current project workspace
+- =lsp-ivy-global-workspace-symbol= - Search for a symbol name in all active project workspaces
+
+#+begin_src emacs-lisp
+
+  (use-package lsp-ivy
+    :after lsp)
+  
+#+end_src
+
+****  dap-mode
+
+[[https://emacs-lsp.github.io/dap-mode/][dap-mode]] is an excellent package for bringing rich debugging capabilities to Emacs via the [[https://microsoft.github.io/debug-adapter-protocol/][Debug Adapter Protocol]].  You should check out the [[https://emacs-lsp.github.io/dap-mode/page/configuration/][configuration docs]] to learn how to configure the debugger for your language.  Also make sure to check out the documentation for the debug adapter to see what configuration parameters are available to use for your debug templates!
+
+#+begin_src emacs-lisp
+
+    (use-package dap-mode
+      ;; Uncomment the config below if you want all UI panes to be hidden by default!
+      ;; :custom
+      ;; (lsp-enable-dap-auto-configure nil)
+      ;; (dap-ui-mode 1)
+      ;; (dap-auto-configure-features '(sessions locals expressions controls tooltip))
+      ;; :config
+      ;; (dap-ui-mode 1)
+
+      :config
+      ;; Set up Node debugging
+
+      (require 'dap-lldb)
+      (require 'dap-cpptools)  
+      (dap-cpptools-setup) ;; Automatically installs Node debug adapter if needed
+
+      ;; Bind `C-c l d` to `dap-hydra` for easy access
+      ;; (general-define-key
+      ;;   :keymaps 'lsp-mode-map
+      ;;   :prefix lsp-keymap-prefix
+      ;;   "d" '(dap-hydra t :wk "debugger"))
+      ;; :bind-keymap (("C-c l d" . dap-hydra))
+      )
+
+    (setq dap-auto-configure-mode t)
+
+    (add-hook 'dap-stopped-hook
+              (lambda (arg) (call-interactively #'dap-hydra)))
+
+    ;; More minimal UI
+  (setq dap-auto-configure-features '(locals controls tooltip)
+        dap-auto-show-output nil ;; Hide the annoying server output
+        lsp-enable-dap-auto-configure t)
+
+  ;; Automatically trigger dap-hydra when a program hits a breakpoint.
+  (add-hook 'dap-stopped-hook (lambda (arg) (call-interactively #'dap-hydra)))
+
+  ;; Automatically delete session and close dap-hydra when DAP is terminated.
+  (add-hook 'dap-terminated-hook
+            (lambda (arg)
+              (call-interactively #'dap-delete-session)
+              (dap-hydra/nil)))
+
+  
+  (define-key dap-mode-map (kbd "C-c l d") 'dap-hydra)
+#+end_src
+
+*** Company
+
+[[http://company-mode.github.io/][Company Mode]] provides a nicer in-buffer completion interface than =completion-at-point= which is more reminiscent of what you would expect from an IDE.  We add a simple configuration to make the keybindings a little more useful (=TAB= now completes the selection and initiates completion at the current location if needed).
+
+We also use [[https://github.com/sebastiencs/company-box][company-box]] to further enhance the look of the completions with icons and better overall presentation.
+
+#+begin_src emacs-lisp
+
+    ;; (use-package company
+    ;;   :ensure t
+    ;;   ;; Navigate in completion minibuffer with `C-n` and `C-p`.
+    ;;   :bind (:map company-active-map
+    ;;          ("C-n" . company-select-next)
+    ;;          ("C-p" . company-select-previous))
+    ;;   :config
+    ;;   ;; Provide instant autocompletion.
+    ;;   (setq company-idle-delay 0.3)
+    ;;   ;; Use company mode everywhere.
+    ;;   (global-company-mode t))
+
+    (use-package company
+      ;;:after lsp-mode
+      :hook (lsp-mode . company-mode)
+      :bind (:map company-active-map
+             ("<tab>" . company-complete-selection))
+            (:map lsp-mode-map
+             ("<tab>" . company-indent-or-complete-common))
+      :custom
+      (company-minimum-prefix-length 1)
+      (company-idle-delay 0.0))
+
+    ;; (use-package company-box
+    ;;   :hook (company-mode . company-box-mode)
+    ;;   )
+
+  (add-hook 'after-init-hook 'global-company-mode)
+
+#+end_src
+
+** Projectile
+
+[[https://projectile.mx/][Projectile]] is a project management library for Emacs which makes it a lot easier to navigate around code projects for various languages.  Many packages integrate with Projectile so it's a good idea to have it installed even if you don't use its commands directly.
+
+#+begin_src emacs-lisp
+
+    (use-package projectile
+      :diminish projectile-mode
+      :config (projectile-mode)
+      :custom ((projectile-completion-system 'ivy))
+      :bind-keymap
+      ("C-c p" . projectile-command-map)
+      :init
+      (projectile-mode +1)
+      ;; NOTE: Set this to the folder where you keep your Git repos!
+      ;; (when (file-directory-p "~/Projects/Code")
+      ;;   (setq projectile-project-search-path '("~/Projects/Code")))
+      ;; (setq projectile-switch-project-action #'projectile-dired)
+  )
+
+    ;; (use-package counsel-projectile
+    ;;   :config (counsel-projectile-mode))
+
+#+end_src
+
+** Magit
+
+[[https://magit.vc/][Magit]] is the best Git interface I've ever used.  Common Git operations are easy to execute quickly using Magit's command panel system.
+
+#+begin_src emacs-lisp
+
+  (use-package magit
+    ;; :custom
+    ;; (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+    ;; :ensure t
+    :bind ("C-x g" . magit-status))
+
+  ;; NOTE: Make sure to configure a GitHub token before using this package!
+  ;; - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
+  ;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
+(use-package forge
+  :after magit)
+
+(use-package magit-todos
+  :defer t)
+#+end_src
+
+** Rainbow Delimiters
+
+[[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] is useful in programming modes because it colorizes nested parentheses and brackets according to their nesting depth.  This makes it a lot easier to visually match parentheses in Emacs Lisp code without having to count them yourself.
+
+#+begin_src emacs-lisp
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+#+end_src
+
+** Treemacs
+
+#+begin_src emacs-lisp
+
+;; ───────────────────────────────────
+; Sidebar navigation with extras
+(use-package treemacs  
+  :config
+  (treemacs-filewatch-mode t)
+  (treemacs-git-mode 'extended)
+  (treemacs-follow-mode -1)
+  (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
+  :bind (("C-c C-g C-t" . treemacs)))
+;(bind-key "C-c C-g C-t" treemacs)
+; Unifies projectile and treemacs
+(use-package treemacs-projectile
+  :after (treemacs projectile)
+)
+
+; Makes treemacs show different colors for committed, staged and modified files
+(use-package treemacs-magit
+  :after (treemacs magit))
+
+#+end_src
+** Json
+
+#+begin_src emacs-lisp
+(use-package json-mode)
+#+end_src
+
+** Python
+
+*** Notebook
+ #+begin_src emacs-lisp
+   ;; ───────────────────────────────────
+   ;; Notebook
+   (use-package ein)
+   ;;(require 'ein)
+   ;;(require 'ein-notebook)
+
+ #+end_src
+*** COMMENT Elpy
+ #+begin_src emacs-lisp
+
+   ;; ───────────────────────────────────
+   (use-package elpy
+     :init
+     (elpy-enable))
+
+   ;; Enable Flycheck
+   ;; (when (require 'flycheck nil t)
+
+   ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+
+   ;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+   (when (load "flycheck" t t)
+   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+   (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+   ;;(setq flycheck-flake8rc "~/.config/flake8/setup.cfg")
+   ;;(setq flycheck-pylintrc "~/.config/flake8/.pylintrc")
+
+  (setq elpy-rpc-backend "jedi")
+  (setq elpy-rpc-virtualenv-path 'current)
+                                          ;(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
+   
+ #+end_src
+
+*** LSP & Dap
+
+We use =lsp-mode= and =dap-mode= to provide a more complete development environment for Python in Emacs.  Check out [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pyls/][the =pyls= configuration]] in the =lsp-mode= documentation for more details.
+
+Make sure you have the =pyls= language server installed before trying =lsp-mode=!
+
+# #+begin_src sh :tangle no
+#   # 
+#   pip install --user "python-language-server[all]"
+# #+end_src
+
+There are a number of other language servers for Python so if you find that =pyls= doesn't work for you, consult the =lsp-mode= [[https://emacs-lsp.github.io/lsp-mode/page/languages/][language configuration documentation]] to try the others!
+
+#+begin_src emacs-lisp
+
+  ;; (use-package lsp-pyright
+
+  ;;   :hook (python-mode . (lambda ()
+
+  ;;                         (require 'lsp-pyright)
+
+  ;;                         (lsp-deferred))))
+
+
+  (use-package python-mode
+
+    :hook (python-mode . lsp-deferred)
+
+    :custom
+
+    ;; NOTE: Set these if Python 3 is called "python3" on your system!
+
+    ;; (python-shell-interpreter "python3")
+
+    ;; (dap-python-executable "python3")
+
+    (dap-python-debugger 'debugpy)
+
+    :config
+
+    (require 'dap-python))
+
+
+  ;; (use-package py-isort
+
+  ;;   :after python
+
+  ;;   :hook ((python-mode . pyvenv-mode)
+
+  ;;          (before-save . py-isort-before-save)))
+
+
+  ;; (use-package blacken
+
+  ;;   :delight
+
+  ;;   :hook (python-mode . blacken-mode)
+
+  ;;   :custom (blacken-line-length 79))
+
+#+end_src
+
+*** Environments
+
+#+begin_src emacs-lisp
+  ;; workon home
+  ;; (setenv "WORKON_HOME" "~/anaconda3/envs/")
+  (setenv "WORKON_HOME" *anaconda_env*)
+  (defalias 'workon 'pyvenv-workon)
+
+  ;(setq python-shell-interpreter "/usr/bin/python3")
+  ;; (setq python-shell-interpreter "ipython"
+  ;;       python-shell-interpreter-args "-i --simple-prompt")
+
+  (use-package pyvenv
+    :after python-mode
+    :config
+    (pyvenv-mode t))
+
+  ;; Set correct Python interpreter
+  (setq pyvenv-post-activate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
+  (setq pyvenv-post-deactivate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter "python"))))
+
+#+end_src
+
+*** Set_trace
+
+#+begin_src emacs-lisp
+
+        (defun add-py-debug ()  
+              "add debug code and move line down"  
+            (interactive)  
+            (move-beginning-of-line 1)  
+            (insert "import pdb; pdb.set_trace();\n"))  
+
+        (defun remove-py-debug ()  
+          "remove py debug code, if found"  
+          (interactive)  
+          (let ((x (line-number-at-pos))  
+            (cur (point)))  
+            (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")  
+            (if (= x (line-number-at-pos))  
+            (let ()  
+              (move-beginning-of-line 1)  
+              (kill-line 1)  
+              (move-beginning-of-line 1))  
+              (goto-char cur))))
+
+  ;; TODO: Mapping not working with LSP config
+   (eval-after-load "python-mode" '(progn
+                                            ;(local-set-key (kbd "<f9>") 'remove-py-debug)
+            (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
+            (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
+            (define-key python-mode-map (kbd "<f8>") '(lambda ()  
+                                                        (interactive)   
+                                                        (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
+                                                        (move-beginning-of-line 1)))
+  ))
+
+      ;; (defvar python-mode-map)
+      ;; (setq python-mode-map
+      ;;       (let ((map (make-sparse-keymap)))
+      ;;                                         ;(local-set-key (kbd "<f9>") 'remove-py-debug)
+      ;;         (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
+      ;;         (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
+      ;;         (define-key python-mode-map (kbd "<f8>") '(lambda ()  
+      ;;                                                     (interactive)   
+      ;;                                                     (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
+      ;;                                                     (move-beginning-of-line 1)))
+      ;;         )
+      ;;       )
+#+end_src
+** Cpp
+
+#+begin_src emacs-lisp
+
+    ;; snippets and snippet expansion
+    ;; (use-package yasnippet
+    ;; :init
+    ;; (yas-global-mode 1))
+
+    ;; tags for code navigation
+    (use-package ggtags
+    :config
+    (add-hook 'c-mode-common-hook
+    (lambda ()
+    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+    (ggtags-mode 1))))
+    )
+
+  ;; (use-package ccls
+  ;;   :hook ((c-mode c++-mode objc-mode cuda-mode) .
+  ;;          (lambda () (require 'ccls) (lsp-deferred))))
+
+#+end_src
+
+*** Debugger
+
+#+begin_src emacs-lisp
+(setq
+ ;; use gdb-many-windows by default
+ gdb-many-windows t
+
+ ;; Non-nil means display source file containing the main routine at startup
+ gdb-show-main t
+ )
+#+end_src
+
+#+begin_src emacs-lisp
+
+;
+#+end_src
+* Custom file
+
+#+begin_src emacs-lisp
+(setq custom-file "~/.emacs.d/custom-file.el")
+(load-file custom-file)
+(put 'erase-buffer 'disabled nil)
+(put 'dired-find-alternate-file 'disabled nil)
+(put 'downcase-region 'disabled nil)
+#+end_src
+
