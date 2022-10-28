@@ -4,7 +4,7 @@
 ###+SETUPFILE: "./header_setup.org"
 
 * Let the Emacs begin!
-* 
+** 
 This is the configuration we've been building in the *Emacs From Scratch* series, now written as an Org Mode document.  This file generates [[file:init.el][init.el]] which can be loaded by Emacs at startup.
 
 *NOTE:* 
@@ -180,10 +180,10 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-(setq inhibit-splash-screen t)
-(require 'bookmark)
-(list-bookmarks)
-(switch-to-buffer "*Bookmark List*")
+  ;; (setq inhibit-splash-screen t)
+  ;; (require 'bookmark)
+  ;; (list-bookmarks)
+  ;; (switch-to-buffer "*Bookmark List*")
 
 #+end_src
 * UI Configuration
@@ -440,6 +440,12 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
 
 #+end_src
 
+*** with timestamps
+
+#+begin_src emacs-lisp
+(setq undo-tree-visualizer-timestamps t)
+#+end_src
+
 ** fci line
 
 #+begin_src emacs-lisp
@@ -475,7 +481,6 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
 
 #+begin_src emacs-lisp
   (use-package dashboard
-    :ensure t
     :config
     (dashboard-setup-startup-hook)
     )
@@ -486,6 +491,15 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
                          (agenda . 5)
                          (registers . 5))) 
 #+end_src
+** Minimap
+
+#+begin_src emacs-lisp
+
+  (use-package minimap
+    :bind (("C-c C-g m" . minimap-mode))
+    )
+#+end_src
+
 * System navigation and output
 
 ** Dired
@@ -573,7 +587,7 @@ converted to PDF at the same location."
     (url-hexify-string (if mark-active
          (buffer-substring (region-beginning) (region-end))
 	 (read-string "Google: "))))))
- (global-set-key (kbd "C-c C-g C-g") #'er-google)
+ (global-set-key (kbd "C-c C-g g") #'er-google)
 
 #+end_src
 * Org Mode
@@ -827,9 +841,6 @@ Try these commands with =M-x=:
 
     (setq dap-auto-configure-mode t)
 
-    (add-hook 'dap-stopped-hook
-              (lambda (arg) (call-interactively #'dap-hydra)))
-
     ;; More minimal UI
   (setq dap-auto-configure-features '(locals controls tooltip)
         dap-auto-show-output nil ;; Hide the annoying server output
@@ -884,6 +895,15 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
     ;;   )
 
   (add-hook 'after-init-hook 'global-company-mode)
+
+#+end_src
+
+*** Compilation
+#+begin_src emacs-lisp
+
+(use-package smart-compile
+  :bind (("C-c C-g c" . smart-compile))
+)
 
 #+end_src
 
@@ -1160,13 +1180,13 @@ There are a number of other language servers for Python so if you find that =pyl
     ;; (yas-global-mode 1))
 
     ;; tags for code navigation
-    (use-package ggtags
-    :config
-    (add-hook 'c-mode-common-hook
-    (lambda ()
-    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-    (ggtags-mode 1))))
-    )
+    ;; (use-package ggtags
+    ;; :config
+    ;; (add-hook 'c-mode-common-hook
+    ;; (lambda ()
+    ;; (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+    ;; (ggtags-mode 1))))
+    ;; )
 
   ;; (use-package ccls
   ;;   :hook ((c-mode c++-mode objc-mode cuda-mode) .
