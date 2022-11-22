@@ -497,7 +497,26 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
     :bind (("C-c C-g m" . minimap-mode))
     )
 #+end_src
-
+* Custom functions
+** copy line
+https://gist.github.com/kristianhellquist/3082383
+#+begin_src emacs-lisp
+  ;; (defun copy-current-line-position-to-clipboard ()
+  ;; "Copy current line in file to clipboard as '</path/to/file>::<line-number>'"
+  ;; (interactive)
+  ;; (let ((path-with-line-number
+  ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+  ;;   (x-select-text path-with-line-number)
+  ;;   (message (concat path-with-line-number " copied to clipboard"))))
+  (defun copy-current-line-position-to-clipboard ()
+    "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
+    (interactive)
+    (let ((path-with-line-number
+           (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+      (kill-new path-with-line-number)
+      (message (concat path-with-line-number " copied to clipboard"))))
+  (define-key global-map (kbd "C-c C-g C-l") 'copy-current-line-position-to-clipboard)
+#+end_src
 * System navigation and output
 
 ** Dired
