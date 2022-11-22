@@ -1205,6 +1205,10 @@ There are a number of other language servers for Python so if you find that =pyl
 
 ;
 #+end_src
+*** .inl files
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.inl\\'" . c++-mode))
+#+end_src
 * Custom file
 
 #+begin_src emacs-lisp
