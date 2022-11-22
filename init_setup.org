@@ -1071,7 +1071,11 @@ There are a number of other language servers for Python so if you find that =pyl
 
     (require 'dap-python))
 
-
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-pyright)
+                          (lsp))))  ; or lsp-deferred
   ;; (use-package py-isort
 
   ;;   :after python
