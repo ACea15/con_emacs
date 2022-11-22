@@ -759,6 +759,7 @@ The =which-key= integration adds helpful descriptions of the various keys so you
       (add-hook 'c++-mode-hook #'lsp)
       (add-hook 'python-mode-hook #'lsp)
       (add-hook 'rust-mode-hook #'lsp)
+      :bind (("C-c l o" . lsp-clangd-find-other-file))
   )
 
 #+end_src
