@@ -646,6 +646,13 @@ https://emacs.stackexchange.com/questions/63875/emacs-org-mode-shortcut-to-creat
   ;;   add-to-list 'org-structure-template-alist '("i" . "src emacs-elisp")))
   ;;   )
 #+end_src
+** Epresent
+Presentation mode in ORG mode
+https://github.com/eschulte/epresent
+
+#+begin_src emacs-lisp
+  (use-package epresent)
+#+end_src
 * Development
 
 ** General
