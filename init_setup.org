@@ -187,7 +187,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+end_src
 * UI Configuration
-
 ** General settings
 #+begin_src emacs-lisp
 
@@ -216,7 +215,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
   (setq visible-bell nil)
 
 #+end_src
-
 *** Transparency of window
 #+begin_src emacs-lisp
 (defun djcb-opacity-modify (&optional dec)
@@ -614,32 +612,29 @@ converted to PDF at the same location."
 
 (setq org-ellipsis " ⤵")
 #+end_src
-
 ** Babel
 
 #+begin_src emacs-lisp
 
-    ;; active Babel languages
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((gnuplot . t)
-       (plantuml . t)
-       (python . t)
-       (latex . t)
-       (org . t)
-       (emacs-lisp . t)
-       ))
-    ;; add additional languages with '((language . t)))
-  (setq org-plantuml-jar-path (expand-file-name "/home/alvarocea/Descargas/Developer/plantuml.jar"))
+      ;; active Babel languages
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((gnuplot . t)
+         (plantuml . t)
+         (python . t)
+         (latex . t)
+         (org . t)
+         (emacs-lisp . t)
+         ))
+      ;; add additional languages with '((language . t)))
+    (setq org-plantuml-jar-path (expand-file-name
+                                 *plantuml*))
 
 #+end_src
-
 ** Plantuml
 
 #+begin_src emacs-lisp
-
   (use-package plantuml-mode)
-
 #+end_src
 
 ** Templates
