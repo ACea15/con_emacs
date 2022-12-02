@@ -497,6 +497,10 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
     :bind (("C-c C-g m" . minimap-mode))
     )
 #+end_src
+** diffing
+#+begin_src emacs-lisp
+(use-package ztree)
+#+end_src
 * Custom functions
 ** copy line and file path
 https://gist.github.com/kristianhellquist/3082383
@@ -532,6 +536,7 @@ https://gist.github.com/kristianhellquist/3082383
 
   (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
 #+end_src
+
 * System navigation and output
 
 ** Dired
