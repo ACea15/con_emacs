@@ -498,7 +498,7 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
     )
 #+end_src
 * Custom functions
-** copy line
+** copy line and file path
 https://gist.github.com/kristianhellquist/3082383
 #+begin_src emacs-lisp
   ;; (defun copy-current-line-position-to-clipboard ()
@@ -515,7 +515,22 @@ https://gist.github.com/kristianhellquist/3082383
            (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
       (kill-new path-with-line-number)
       (message (concat path-with-line-number " copied to clipboard"))))
+  
   (define-key global-map (kbd "C-c C-g C-l") 'copy-current-line-position-to-clipboard)
+#+end_src
+** copy path to current file
+#+begin_src emacs-lisp
+  (defun er-copy-file-name-to-clipboard ()
+    "Copy the current buffer file name to the clipboard."
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (kill-new filename)
+        (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+  (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
 #+end_src
 * System navigation and output
 
@@ -527,44 +542,46 @@ http://xahlee.info/emacs/emacs/emacs_dired_tips.html
 
 #+begin_src emacs-lisp
 
-   (use-package dired
-     :ensure nil
-     :commands (dired dired-jump)
-     :bind (("C-x C-j" . dired-jump))
-     :custom 
-     (dired-listing-switches "-agho --group-directories-first")
-     :config
-     ;; (define-key dired-mode-map
-     ;;   (kbd "B") 'dired-single-up-directory)
-     ;; (define-key dired-mode-map
-     ;;   (kbd "G") 'dired-single-buffer)
-     )
+     (use-package dired
+       :ensure nil
+       :commands (dired dired-jump)
+       :bind (("C-x C-j" . dired-jump))
+       :custom 
+       (dired-listing-switches "-agho --group-directories-first")
+       :config
+       ;; (define-key dired-mode-map
+       ;;   (kbd "B") 'dired-single-up-directory)
+       ;; (define-key dired-mode-map
+       ;;   (kbd "G") 'dired-single-buffer)
+       )
 
-   (setq dired-dwim-target t)
-   ;; Revert Dired and other buffers
-   (setq global-auto-revert-non-file-buffers t)
-   ;; (use-package dired-single)
+  (define-key dired-mode-map (kbd "C-b") (lambda () (interactive) (find-alternate-file "..")))  ; was dired-up-directory
+  
+     (setq dired-dwim-target t)
+     ;; Revert Dired and other buffers
+     (setq global-auto-revert-non-file-buffers t)
+     ;; (use-package dired-single)
 
-   (use-package dired-hide-dotfiles
-     :hook (dired-mode . dired-hide-dotfiles-mode)
-     :config
-     (define-key dired-mode-map
-       (kbd "C-c h") 'dired-hide-dotfiles-mode))
+     (use-package dired-hide-dotfiles
+       :hook (dired-mode . dired-hide-dotfiles-mode)
+       :config
+       (define-key dired-mode-map
+         (kbd "C-c h") 'dired-hide-dotfiles-mode))
 
-   (use-package all-the-icons-dired
-     :hook (dired-mode . all-the-icons-dired-mode))
+     (use-package all-the-icons-dired
+       :hook (dired-mode . all-the-icons-dired-mode))
 
 
-  ;; (use-package dired+
-  ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
-  ;;  :defer 1
-  ;;  ;; :init
-  ;;  ;; (setq diredp-hide-details-initially-flag nil)
-  ;;  ;; (setq diredp-hide-details-propagate-flag nil)
+    ;; (use-package dired+
+    ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
+    ;;  :defer 1
+    ;;  ;; :init
+    ;;  ;; (setq diredp-hide-details-initially-flag nil)
+    ;;  ;; (setq diredp-hide-details-propagate-flag nil)
 
-  ;;  :config
-  ;;  (diredp-toggle-find-file-reuse-dir 1)
-  ;;  )
+    ;;  :config
+    ;;  (diredp-toggle-find-file-reuse-dir 1)
+    ;;  )
 #+end_src
 
 ** Print PDF
