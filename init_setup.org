@@ -47,6 +47,13 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 #+end_src
 
 ** Local machine variables
+
+#+BEGIN_SRC emacs-lisp
+(when (eq system-type 'darwin)
+  (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls"))
+
+#+END_SRC
+
 ** Tangle
 *** Auto-tangle Configuration Files
 
