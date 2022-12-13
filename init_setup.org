@@ -664,19 +664,20 @@ converted to PDF at the same location."
 
 #+begin_src emacs-lisp
 
-      ;; active Babel languages
-      (org-babel-do-load-languages
-       'org-babel-load-languages
-       '((gnuplot . t)
-         (plantuml . t)
-         (python . t)
-         (latex . t)
-         (org . t)
-         (emacs-lisp . t)
-         ))
-      ;; add additional languages with '((language . t)))
+    ;; active Babel languages
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((gnuplot . t)
+       (plantuml . t)
+       (python . t)
+       (latex . t)
+       (org . t)
+       (emacs-lisp . t)
+       ))
+    ;; add additional languages with '((language . t)))
+  (when (boundp '*plantuml*)
     (setq org-plantuml-jar-path (expand-file-name
-                                 *plantuml*))
+                                 ,*plantuml*)))
 
 #+end_src
 ** Plantuml
