@@ -200,7 +200,9 @@ http://xahlee.info/emacs/emacs/bookmark.html
   ;; ───────────────────────────────────General settings──────────────────────────────────
   ;; Line highlight and line number
   (global-hl-line-mode t)
-  (global-linum-mode t)
+  ;; (global-linum-mode t)
+  (add-hook 'prog-mode-hook (lambda() (display-line-numbers-mode 1)))
+  (add-hook 'text-mode-hook (lambda() (display-line-numbers-mode 1)))
   ;; Show column and line number 
   (line-number-mode t)
   (column-number-mode t)
