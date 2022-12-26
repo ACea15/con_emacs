@@ -911,7 +911,8 @@ Try these commands with =M-x=:
       ;; Set up Node debugging
 
       (require 'dap-lldb)
-      (require 'dap-cpptools)  
+      (require 'dap-cpptools)
+      (require 'dap-python)
       (dap-cpptools-setup) ;; Automatically installs Node debug adapter if needed
 
       ;; Bind `C-c l d` to `dap-hydra` for easy access
@@ -971,7 +972,7 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
              ("<tab>" . company-indent-or-complete-common))
       :custom
       (company-minimum-prefix-length 1)
-      (company-idle-delay 0.0))
+      (company-idle-delay 0.1))
 
     ;; (use-package company-box
     ;;   :hook (company-mode . company-box-mode)
@@ -1143,54 +1144,55 @@ There are a number of other language servers for Python so if you find that =pyl
 
 #+begin_src emacs-lisp
 
-  ;; (use-package lsp-pyright
+    ;; (use-package lsp-pyright
 
-  ;;   :hook (python-mode . (lambda ()
+    ;;   :hook (python-mode . (lambda ()
 
-  ;;                         (require 'lsp-pyright)
+    ;;                         (require 'lsp-pyright)
 
-  ;;                         (lsp-deferred))))
-
-
-  (use-package python-mode
-
-    :hook (python-mode . lsp-deferred)
-
-    :custom
-
-    ;; NOTE: Set these if Python 3 is called "python3" on your system!
-
-    ;; (python-shell-interpreter "python3")
-
-    ;; (dap-python-executable "python3")
-
-    (dap-python-debugger 'debugpy)
-
-    :config
-
-    (require 'dap-python))
-
-(use-package lsp-pyright
-  :ensure t
-  :hook (python-mode . (lambda ()
-                          (require 'lsp-pyright)
-                          (lsp))))  ; or lsp-deferred
-  ;; (use-package py-isort
-
-  ;;   :after python
-
-  ;;   :hook ((python-mode . pyvenv-mode)
-
-  ;;          (before-save . py-isort-before-save)))
+    ;;                         (lsp-deferred))))
 
 
-  ;; (use-package blacken
+    (use-package python-mode
 
-  ;;   :delight
+      :hook (python-mode . lsp-deferred)
 
-  ;;   :hook (python-mode . blacken-mode)
+      :custom
 
-  ;;   :custom (blacken-line-length 79))
+      ;; NOTE: Set these if Python 3 is called "python3" on your system!
+
+      ;; (python-shell-interpreter "python3")
+
+      ;; (dap-python-executable "python3")
+
+      (dap-python-debugger 'debugpy)
+
+      ;; :config
+
+      ;; (require 'dap-python)
+      )
+
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-mode . (lambda ()
+                            (require 'lsp-pyright)
+                            (lsp))))  ; or lsp-deferred
+    ;; (use-package py-isort
+
+    ;;   :after python
+
+    ;;   :hook ((python-mode . pyvenv-mode)
+
+    ;;          (before-save . py-isort-before-save)))
+
+
+    ;; (use-package blacken
+
+    ;;   :delight
+
+    ;;   :hook (python-mode . blacken-mode)
+
+    ;;   :custom (blacken-line-length 79))
 
 #+end_src
 
