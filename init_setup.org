@@ -900,10 +900,10 @@ Try these commands with =M-x=:
 
     (use-package dap-mode
       ;; Uncomment the config below if you want all UI panes to be hidden by default!
-      ;; :custom
-      ;; (lsp-enable-dap-auto-configure nil)
+      :custom
+      ;;(lsp-enable-dap-auto-configure nil)
       ;; (dap-ui-mode 1)
-      ;; (dap-auto-configure-features '(sessions locals expressions controls tooltip))
+      (dap-auto-configure-features '(tooltip))
       ;; :config
       ;; (dap-ui-mode 1)
 
@@ -914,21 +914,21 @@ Try these commands with =M-x=:
       (require 'dap-cpptools)
       (require 'dap-python)
       (dap-cpptools-setup) ;; Automatically installs Node debug adapter if needed
-
+      (dap-ui-mode 1)
       ;; Bind `C-c l d` to `dap-hydra` for easy access
       ;; (general-define-key
       ;;   :keymaps 'lsp-mode-map
       ;;   :prefix lsp-keymap-prefix
       ;;   "d" '(dap-hydra t :wk "debugger"))
-      ;; :bind-keymap (("C-c l d" . dap-hydra))
+      ;;;:bind-keymap (("C-c l d" . dap-hydra))
       )
 
-    (setq dap-auto-configure-mode t)
+  ;;   (setq dap-auto-configure-mode t)
 
-    ;; More minimal UI
-  (setq dap-auto-configure-features '(locals controls tooltip)
-        dap-auto-show-output nil ;; Hide the annoying server output
-        lsp-enable-dap-auto-configure t)
+  ;;   ;; More minimal UI
+  ;; (setq dap-auto-configure-features '(locals controls tooltip)
+  ;;       dap-auto-show-output nil ;; Hide the annoying server output
+  ;;       lsp-enable-dap-auto-configure t)
 
   ;; Automatically trigger dap-hydra when a program hits a breakpoint.
   (add-hook 'dap-stopped-hook (lambda (arg) (call-interactively #'dap-hydra)))
@@ -939,7 +939,7 @@ Try these commands with =M-x=:
               (call-interactively #'dap-delete-session)
               (dap-hydra/nil)))
 
-  
+
   (define-key dap-mode-map (kbd "C-c l d") 'dap-hydra)
 #+end_src
 
@@ -1193,9 +1193,16 @@ There are a number of other language servers for Python so if you find that =pyl
     ;;   :hook (python-mode . blacken-mode)
 
     ;;   :custom (blacken-line-length 79))
-
+    (setq dap-python-terminal "xterm -e ")
 #+end_src
 
+*** docstrings
+ #+begin_src emacs-lisp
+(use-package numpydoc
+  :ensure t
+  :bind (:map python-mode-map
+              ("C-c C-n" . numpydoc-generate)))
+ #+end_src
 *** Environments
 
 #+begin_src emacs-lisp
