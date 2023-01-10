@@ -46,6 +46,11 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+end_src
 
+** Title frame
+
+#+begin_src emacs-lisp
+  (setq frame-title-format (concat "Emacs pid-"(number-to-string (emacs-pid))))
+#+end_src
 ** Local machine variables
 
 #+BEGIN_SRC emacs-lisp
