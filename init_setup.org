@@ -208,6 +208,8 @@ http://xahlee.info/emacs/emacs/bookmark.html
   ;; (global-linum-mode t)
   (add-hook 'prog-mode-hook (lambda() (display-line-numbers-mode 1)))
   (add-hook 'text-mode-hook (lambda() (display-line-numbers-mode 1)))
+  (bind-key "C-c C-g n" 'display-line-numbers-mode)
+
   ;; Show column and line number 
   (line-number-mode t)
   (column-number-mode t)
@@ -671,26 +673,40 @@ converted to PDF at the same location."
 
 #+begin_src emacs-lisp
 
-    ;; active Babel languages
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((gnuplot . t)
-       (plantuml . t)
-       (python . t)
-       (latex . t)
-       (org . t)
-       (emacs-lisp . t)
-       ))
-    ;; add additional languages with '((language . t)))
-  (when (boundp '*plantuml*)
-    (setq org-plantuml-jar-path (expand-file-name
-                                 ,*plantuml*)))
+;; active Babel languages
+(org-babel-do-load-languages
+'org-babel-load-languages
+'((gnuplot . t)
+(plantuml . t)
+(python . t)
+(latex . t)
+(org . t)
+(emacs-lisp . t)
+(shell . t)
+))
+;; add additional languages with '((language . t)))
+(when (boundp '*plantuml*)
+(setq org-plantuml-jar-path (expand-file-name
+,*plantuml*)))
 
+#+end_src
+
+*** Dont ask to run code blocks and indent automatically with tab 
+https://orgmode.org/manual/Code-Evaluation-Security.html
+#+begin_src emacs-lisp
+(setq org-confirm-babel-evaluate t)
+(setq org-src-tab-acts-natively t)
+#+end_src
+
+*** Source block shortcut
+https://emacs.stackexchange.com/questions/12841/quickly-insert-source-blocks-in-org-mode
+#+begin_src emacs-lisp
+(require 'org-tempo)
 #+end_src
 ** Plantuml
 
 #+begin_src emacs-lisp
-  (use-package plantuml-mode)
+(use-package plantuml-mode)
 #+end_src
 
 ** Templates
@@ -877,8 +893,13 @@ This package is built on the [[https://github.com/Alexander-Miller/treemacs][tre
 #+begin_src emacs-lisp
   ;; 
   (use-package lsp-treemacs
-    :after lsp)
-
+    :after lsp
+    :bind (:map lsp-mode-map
+    ("C-c l t" . 'lsp-treemacs-symbols))
+    )
+   (eval-after-load 'lsp-mode 
+                    '(define-key lsp-mode-map (kbd "C-c l t") 'lsp-treemacs-symbols))
+  ;;(define-key lsp-mode-map (kbd "C-c l t") 'lsp-treemacs-symbols)
 #+end_src
 
 **** lsp-ivy
