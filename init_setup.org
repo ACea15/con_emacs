@@ -669,25 +669,33 @@ converted to PDF at the same location."
 
 (setq org-ellipsis " ⤵")
 #+end_src
+** Export to ipython
+Steps taken:
+- cd .emacs.d/ && mkdir lisp && cd lisp/  && wget http://kitchingroup.cheme.cmu.edu/media/ox-ipynb.el
+#+begin_src emacs-lisp
+(use-package  ob-ipython)
+(add-to-list 'load-path "~/.emacs.d/lisp")
+(require 'ox-ipynb)
+#+end_src
 ** Babel
 
 #+begin_src emacs-lisp
 
-;; active Babel languages
-(org-babel-do-load-languages
-'org-babel-load-languages
-'((gnuplot . t)
-(plantuml . t)
-(python . t)
-(latex . t)
-(org . t)
-(emacs-lisp . t)
-(shell . t)
-))
-;; add additional languages with '((language . t)))
-(when (boundp '*plantuml*)
-(setq org-plantuml-jar-path (expand-file-name
-,*plantuml*)))
+  ;; active Babel languages
+  (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((gnuplot . t)
+    (plantuml . t)
+    (python . t)
+    (latex . t)
+    (org . t)
+    (emacs-lisp . t)
+    (shell . t)
+    ))
+  ;; add additional languages with '((language . t)))
+  (when (boundp '*plantuml*)
+  (setq org-plantuml-jar-path (expand-file-name
+                               ,*plantuml*)))
 
 #+end_src
 
@@ -856,10 +864,9 @@ The =which-key= integration adds helpful descriptions of the various keys so you
       :config
       (setq lsp-enable-snippet t)
       (setq lsp-clients-clangd-args '("-j=4" "-background-index" "-log=error"))
-      ;; (lsp-enable-which-key-integration t)
+      (lsp-enable-which-key-integration t)
       (add-hook 'c++-mode-hook #'lsp)
       (add-hook 'python-mode-hook #'lsp)
-      (add-hook 'rust-mode-hook #'lsp)
       :bind (("C-c l o" . lsp-clangd-find-other-file))
   )
 
@@ -1068,11 +1075,13 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
   ;; NOTE: Make sure to configure a GitHub token before using this package!
   ;; - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
   ;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
-(use-package forge
-  :after magit)
+  (use-package forge
+    :after magit)
 
-(use-package magit-todos
-  :defer t)
+  (use-package magit-todos
+    :defer t)
+
+  (use-package git-timemachine)
 #+end_src
 
 ** Rainbow Delimiters
