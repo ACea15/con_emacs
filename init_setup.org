@@ -59,6 +59,14 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+END_SRC
 
+#+begin_src emacs-lisp
+  ;; (use-package exec-path-from-shell
+  ;; :init
+  ;; (setq exec-path-from-shell-check-startup-files nil)
+  ;; :config
+  ;; (when (eq system-type 'darwin)
+  ;;   (exec-path-from-shell-initialize)))
+#+end_src
 ** Tangle
 *** Auto-tangle Configuration Files
 
@@ -673,9 +681,9 @@ converted to PDF at the same location."
 Steps taken:
 - cd .emacs.d/ && mkdir lisp && cd lisp/  && wget http://kitchingroup.cheme.cmu.edu/media/ox-ipynb.el
 #+begin_src emacs-lisp
-(use-package  ob-ipython)
-(add-to-list 'load-path "~/.emacs.d/lisp")
-(require 'ox-ipynb)
+  ;; (use-package  ob-ipython)
+  ;; (add-to-list 'load-path "~/.emacs.d/lisp")
+  ;; (require 'ox-ipynb)
 #+end_src
 ** Babel
 
@@ -761,7 +769,30 @@ https://jonathanabennett.github.io/blog/2019/05/29/writing-academic-papers-with-
 #+begin_src emacs-lisp
 (use-package zotxt)
 #+end_src
+** Roam
+#+begin_src emacs-lisp
 
+  ;; Org-Roam basic configuration
+  (setq org-directory (concat (getenv "HOME") "/RoamNotes/"))
+
+  (use-package org-roam
+    :after org
+    :init (setq org-roam-v2-ack t) ;; Acknowledge V2 upgrade
+    :custom
+    (org-roam-directory (file-truename org-directory))
+    (org-roam-completion-everywhere t)
+    :config
+    (org-roam-setup)
+    :bind (("C-c n f" . org-roam-node-find)
+           ("C-c n r" . org-roam-node-random)		    
+           (:map org-mode-map
+                 (("C-c n i" . org-roam-node-insert)
+                  ("C-c n o" . org-id-get-create)
+                  ("C-c n t" . org-roam-tag-add)
+                  ("C-c n a" . org-roam-alias-add)
+                  ("C-c n l" . org-roam-buffer-toggle)))))
+
+#+end_src
 * Development
 ** General
 *** Shell-pop 
@@ -1126,7 +1157,17 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
 #+end_src
 
 ** Python
+*** Conda
+#+begin_src emacs-lisp
+  ;; (use-package conda
+  ;; :config (progn
+  ;;           (conda-env-initialize-interactive-shells)
+  ;;           (conda-env-initialize-eshell)
+  ;;           ;(conda-env-autoactivate-mode t)
+  ;;           (setq conda-env-home-directory (expand-file-name "~/.conda/"))
+  ;;           (custom-set-variables '(conda-anaconda-home "/Users/acea/opt/anaconda3/"))))
 
+#+end_src
 *** Notebook
  #+begin_src emacs-lisp
    ;; ───────────────────────────────────
@@ -1179,56 +1220,59 @@ There are a number of other language servers for Python so if you find that =pyl
 
 #+begin_src emacs-lisp
 
-    ;; (use-package lsp-pyright
+  ;; (use-package lsp-pyright
 
-    ;;   :hook (python-mode . (lambda ()
+  ;;   :hook (python-mode . (lambda ()
 
-    ;;                         (require 'lsp-pyright)
+  ;;                         (require 'lsp-pyright)
 
-    ;;                         (lsp-deferred))))
-
-
-    (use-package python-mode
-
-      :hook (python-mode . lsp-deferred)
-
-      :custom
-
-      ;; NOTE: Set these if Python 3 is called "python3" on your system!
-
-      ;; (python-shell-interpreter "python3")
-
-      ;; (dap-python-executable "python3")
-
-      (dap-python-debugger 'debugpy)
-
-      ;; :config
-
-      ;; (require 'dap-python)
-      )
-
-  (use-package lsp-pyright
-    :ensure t
-    :hook (python-mode . (lambda ()
-                            (require 'lsp-pyright)
-                            (lsp))))  ; or lsp-deferred
-    ;; (use-package py-isort
-
-    ;;   :after python
-
-    ;;   :hook ((python-mode . pyvenv-mode)
-
-    ;;          (before-save . py-isort-before-save)))
+  ;;                         (lsp-deferred))))
 
 
-    ;; (use-package blacken
+  (use-package python-mode
 
-    ;;   :delight
+    :hook (python-mode . lsp-deferred)
 
-    ;;   :hook (python-mode . blacken-mode)
+    :custom
 
-    ;;   :custom (blacken-line-length 79))
-    (setq dap-python-terminal "xterm -e ")
+    ;; NOTE: Set these if Python 3 is called "python3" on your system!
+
+    ;; (python-shell-interpreter "python3")
+
+    ;; (dap-python-executable "python3")
+
+    (dap-python-debugger 'debugpy)
+
+    ;; :config
+
+    ;; (require 'dap-python)
+    )
+
+  ;; (use-package lsp-pyright
+  ;;   :ensure t
+  ;;   :hook (python-mode . (lambda ()
+  ;;                           (require 'lsp-pyright)
+  ;;                           (lsp))))  ; or lsp-deferred
+  (use-package importmagic
+    :config
+    (add-hook 'python-mode-hook 'importmagic-mode))
+  ;; (use-package py-isort
+
+  ;;   :after python
+
+  ;;   :hook ((python-mode . pyvenv-mode)
+
+  ;;          (before-save . py-isort-before-save)))
+
+
+  ;; (use-package blacken
+
+  ;;   :delight
+
+  ;;   :hook (python-mode . blacken-mode)
+
+  ;;   :custom (blacken-line-length 79))
+  ;; (setq dap-python-terminal "xterm -e ")
 #+end_src
 
 *** docstrings
