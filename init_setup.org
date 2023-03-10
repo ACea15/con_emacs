@@ -713,14 +713,25 @@ Steps taken:
 *** Dont ask to run code blocks and indent automatically with tab 
 https://orgmode.org/manual/Code-Evaluation-Security.html
 #+begin_src emacs-lisp
-(setq org-confirm-babel-evaluate t)
-(setq org-src-tab-acts-natively t)
+  (setq org-confirm-babel-evaluate t)
+  (setq org-src-tab-acts-natively t)
 #+end_src
 
 *** Source block shortcut
 https://emacs.stackexchange.com/questions/12841/quickly-insert-source-blocks-in-org-mode
 #+begin_src emacs-lisp
 (require 'org-tempo)
+#+end_src
+*** Run async
+Not working, fix here:
+https://github.com/astahlman/ob-async/issues/75
+#+begin_src emacs-lisp
+  (use-package ob-async)
+
+  (defun no-hide-overlays (orig-fun &rest args)
+    (setq org-babel-hide-result-overlays nil))
+  
+  (advice-add 'ob-async-org-babel-execute-src-block :before #'no-hide-overlays)
 #+end_src
 ** Plantuml
 
@@ -1172,6 +1183,8 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
     :init
     (yas-global-mode 1))
 #+end_src
+** REPL
+https://github.com/kaz-yos/eval-in-repl
 ** Projectile
 
 [[https://projectile.mx/][Projectile]] is a project management library for Emacs which makes it a lot easier to navigate around code projects for various languages.  Many packages integrate with Projectile so it's a good idea to have it installed even if you don't use its commands directly.

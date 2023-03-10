@@ -13,4 +13,5 @@
   ;; init emacs 
   (load "~/.emacs.d/init_vars.el")
   (load "~/.emacs.d/init_setup.el")
+  (put 'upcase-region 'disabled nil)
 #+end_src
