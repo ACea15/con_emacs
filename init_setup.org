@@ -545,8 +545,9 @@ https://gist.github.com/kristianhellquist/3082383
            (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
       (kill-new path-with-line-number)
       (message (concat path-with-line-number " copied to clipboard"))))
-  
-  (define-key global-map (kbd "C-c C-g C-l") 'copy-current-line-position-to-clipboard)
+
+  ;;(define-key global-map (kbd "C-c C-g C-l") 'copy-current-line-position-to-clipboard)
+  (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
 #+end_src
 ** copy path to current file
 #+begin_src emacs-lisp
