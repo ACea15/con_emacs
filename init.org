@@ -1,7 +1,7 @@
 #+title: Emacs Configuration for Linux Machines
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
 
-
+Run this code block to write the init file and that's all!
 #+begin_src emacs-lisp :results output silent :tangle no
   (org-babel-tangle-file "./init_vars.org")
   (org-babel-tangle-file "./init_setup.org")
