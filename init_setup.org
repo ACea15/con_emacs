@@ -767,13 +767,70 @@ https://github.com/eschulte/epresent
   (use-package epresent)
 #+end_src
 ** LATEX
-https://jonathanabennett.github.io/blog/2019/05/29/writing-academic-papers-with-org-mode/
 
+https://jonathanabennett.github.io/blog/2019/05/29/writing-academic-papers-with-org-mode/
+https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-pdf-tools
 #+begin_src emacs-lisp
 
   (use-package tex
-         :ensure auctex)
+    :ensure auctex)
 
+  ;; Use pdf-tools to open PDF files
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools"))
+        TeX-source-correlate-start-server t)
+
+  ;; Update PDF buffers after successful LaTeX runs
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer)
+
+  ;; Set main.tex as master document by default
+  (setq-default TeX-master "main.tex")
+
+  ;; (use-package company-reftex)
+  ;; (use-package company-math)
+  ;; (use-package company-bibtex)
+
+  ;; ;; local configuration for TeX modes
+  ;; (defun my-latex-mode-setup ()
+  ;;   (setq-local company-backends
+  ;;               (append '((company-math-symbols-latex company-latex-commands))
+  ;;                       company-backends)))
+
+  ;; (add-hook 'Tex-mode-hook 'my-latex-mode-setup)
+
+
+
+  (add-hook 'LaTeX-mode-hook #'reftex-mode)
+  (add-hook 'latex-mode-hook #'reftex-mode)
+
+  (defun sb/company-latex-mode ()
+    "Add backends for latex completion in company mode."
+    (use-package math-symbol-lists ; Required by ac-math and company-math
+      :ensure t)
+    (use-package company-math
+      :ensure t)
+    (use-package company-reftex
+      :ensure t)
+    (use-package company-bibtex
+      :ensure t)
+    (make-local-variable 'company-backends)
+    (setq company-backends
+          '((
+             company-capf
+             ;; company-tabnine
+             company-bibtex
+             company-math-symbols-latex
+             company-latex-commands
+             company-math-symbols-unicode
+             company-reftex-labels
+             company-reftex-citations
+             company-yasnippet
+             company-files
+             company-ispell
+             company-dabbrev
+             ))))
+  (dolist (hook '(latex-mode-hook LaTeX-mode-hook))
+    (add-hook hook #'sb/company-latex-mode))
 #+end_src
 
 *** Refs
@@ -800,6 +857,7 @@ https://jonathanabennett.github.io/blog/2019/05/29/writing-academic-papers-with-
     (org-roam-completion-everywhere t)
     :config
     (org-roam-setup)
+    (org-roam-db-autosync-mode)
     :bind (("C-c n f" . org-roam-node-find)
            ;("C-c n g" . org-roam-graph)
            ("C-c n r" . org-roam-node-random)		    
@@ -1454,48 +1512,47 @@ There are a number of other language servers for Python so if you find that =pyl
 
 #+begin_src emacs-lisp
 
-        (defun add-py-debug ()  
-              "add debug code and move line down"  
-            (interactive)  
-            (move-beginning-of-line 1)  
-            (insert "import pdb; pdb.set_trace();\n"))  
+  (defun add-py-debug ()  
+        "add debug code and move line down"  
+      (interactive)  
+      (move-beginning-of-line 1)  
+      (insert "import pdb; pdb.set_trace();\n"))  
 
-        (defun remove-py-debug ()  
-          "remove py debug code, if found"  
-          (interactive)  
-          (let ((x (line-number-at-pos))  
-            (cur (point)))  
-            (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")  
-            (if (= x (line-number-at-pos))  
-            (let ()  
-              (move-beginning-of-line 1)  
-              (kill-line 1)  
-              (move-beginning-of-line 1))  
-              (goto-char cur))))
+  (defun remove-py-debug ()  
+    "remove py debug code, if found"  
+    (interactive)  
+    (let ((x (line-number-at-pos))  
+      (cur (point)))  
+      (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")  
+      (if (= x (line-number-at-pos))  
+      (let ()  
+        (move-beginning-of-line 1)  
+        (kill-line 1)  
+        (move-beginning-of-line 1))  
+        (goto-char cur))))
 
   ;; TODO: Mapping not working with LSP config
-   (eval-after-load "python-mode" '(progn
-                                            ;(local-set-key (kbd "<f9>") 'remove-py-debug)
-            (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
-            (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
-            (define-key python-mode-map (kbd "<f8>") '(lambda ()  
-                                                        (interactive)   
-                                                        (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
-                                                        (move-beginning-of-line 1)))
-  ))
+  (eval-after-load "python-mode" '(progn
+                                      ;(local-set-key (kbd "<f9>") 'remove-py-debug)
+      (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
+      (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
+      (define-key python-mode-map (kbd "<f8>") '(lambda ()  
+                                                  (interactive)   
+                                                  (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
+                                                  (move-beginning-of-line 1)))))
 
-      ;; (defvar python-mode-map)
-      ;; (setq python-mode-map
-      ;;       (let ((map (make-sparse-keymap)))
-      ;;                                         ;(local-set-key (kbd "<f9>") 'remove-py-debug)
-      ;;         (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
-      ;;         (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
-      ;;         (define-key python-mode-map (kbd "<f8>") '(lambda ()  
-      ;;                                                     (interactive)   
-      ;;                                                     (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
-      ;;                                                     (move-beginning-of-line 1)))
-      ;;         )
-      ;;       )
+  ;; (defvar python-mode-map)
+  ;; (setq python-mode-map
+  ;;       (let ((map (make-sparse-keymap)))
+  ;;                                         ;(local-set-key (kbd "<f9>") 'remove-py-debug)
+  ;;         (define-key python-mode-map (kbd "C-c <f9>") 'add-py-debug)
+  ;;         (define-key python-mode-map (kbd "<f9>") 'remove-py-debug)
+  ;;         (define-key python-mode-map (kbd "<f8>") '(lambda ()  
+  ;;                                                     (interactive)   
+  ;;                                                     (search-forward-regexp "^[ ]*import pdb; pdb.set_trace();")   
+  ;;                                                     (move-beginning-of-line 1)))
+  ;;         )
+  ;;       )
 #+end_src
 ** Cpp
 
