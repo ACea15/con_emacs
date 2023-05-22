@@ -783,8 +783,9 @@ https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-
   (add-hook 'TeX-after-compilation-finished-functions
             #'TeX-revert-document-buffer)
 
+  (setq TeX-source-correlate-mode t)
   ;; Set main.tex as master document by default
-  (setq-default TeX-master "main.tex")
+  (setq-default TeX-master nil)
 
   ;; (use-package company-reftex)
   ;; (use-package company-math)
