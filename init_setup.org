@@ -746,7 +746,10 @@ https://github.com/astahlman/ob-async/issues/75
   (advice-add 'ob-async-org-babel-execute-src-block :before #'no-hide-overlays)
 #+end_src
 ** Plantuml
-
+- Download plantuml.jar and add path to *plantuml* variable in ./init_vars.org
+  https://plantuml.com/emacs
+- Download JLatexMath in the same folder as .jar file for math
+https://plantuml.com/ascii-math
 #+begin_src emacs-lisp
 (use-package plantuml-mode)
 #+end_src
@@ -800,7 +803,6 @@ https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-
   ;; (add-hook 'Tex-mode-hook 'my-latex-mode-setup)
 
 
-
   (add-hook 'LaTeX-mode-hook #'reftex-mode)
   (add-hook 'latex-mode-hook #'reftex-mode)
 
@@ -832,6 +834,10 @@ https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-
              ))))
   (dolist (hook '(latex-mode-hook LaTeX-mode-hook))
     (add-hook hook #'sb/company-latex-mode))
+
+  ;; Needed for work machine to compile
+  ;;(setq org-latex-pdf-process (list "latexmk -f -synctex=1 -pdf %f"))
+
 #+end_src
 
 *** Refs
