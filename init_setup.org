@@ -208,6 +208,20 @@ http://xahlee.info/emacs/emacs/bookmark.html
   ;; (switch-to-buffer "*Bookmark List*")
 
 #+end_src
+** Moving buffers
+#+begin_src emacs-lisp
+
+  (use-package buffer-move
+    :init (which-key-mode)
+    :diminish which-key-mode
+    :config
+    (global-set-key (kbd "M-g M-<up>")     'buf-move-up)
+    (global-set-key (kbd "M-g M-<down>")   'buf-move-down)
+    (global-set-key (kbd "M-g M-<left>")   'buf-move-left)
+    (global-set-key (kbd "M-g M-<right>")  'buf-move-right))
+
+#+end_src
+
 * UI Configuration
 ** General settings
 #+begin_src emacs-lisp
@@ -714,6 +728,7 @@ Steps taken:
     (org . t)
     (emacs-lisp . t)
     (shell . t)
+    (C . t)
     ))
   ;; add additional languages with '((language . t)))
   (when (boundp '*plantuml*)
@@ -790,6 +805,10 @@ https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-
   ;; Set main.tex as master document by default
   (setq-default TeX-master nil)
 
+  ;; open on the right window after compilation
+  (setq pdf-sync-backward-display-action t)
+  (setq pdf-sync-forward-display-action t)
+
   ;; (use-package company-reftex)
   ;; (use-package company-math)
   ;; (use-package company-bibtex)
@@ -842,8 +861,21 @@ https://emacs.stackexchange.com/questions/19472/how-to-let-auctex-open-pdf-with-
 
 *** Refs
 #+begin_src emacs-lisp
-(use-package zotxt)
+  (use-package zotxt)
 #+end_src
+
+*** show PDFs in org file
+Install pdf2svg first
+# On macOS
+brew install pdf2svg
+
+# On Debian Linux
+sudo apt install pdf2svg
+#+begin_src emacs-lisp
+  (use-package org-inline-pdf)
+  (add-hook 'org-mode-hook #'org-inline-pdf-mode)
+#+end_src
+
 ** Roam
 #+begin_src emacs-lisp
 
