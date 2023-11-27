@@ -55,7 +55,7 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+BEGIN_SRC emacs-lisp
   (when (eq system-type 'darwin)
-    (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls")
+    ;; (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls")
     (setq-default mac-right-option-modifier nil)
     )
 
@@ -92,11 +92,11 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
 
 #+BEGIN_SRC emacs-lisp
 
-    (unless (package-installed-p 'quelpa)
-      (with-temp-buffer
-        (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
-        (eval-buffer)
-        (quelpa-self-upgrade)))
+    ;; (unless (package-installed-p 'quelpa)
+    ;;   (with-temp-buffer
+    ;;     (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+    ;;     (eval-buffer)
+    ;;     (quelpa-self-upgrade)))
 
 
   ;; (quelpa
@@ -175,6 +175,21 @@ https://www.emacswiki.org/emacs/WindMove
 (add-hook 'org-shiftright-final-hook 'windmove-right)
 
 ;; (windmove-default-keybindings 'control)
+#+end_src
+
+** jump
+
+#+begin_src emacs-lisp
+  (use-package avy
+  :config
+  (avy-setup-default))
+
+  ;; Suggested bindings from avy github docs  
+  (global-set-key (kbd "C-:") 'avy-goto-char)  
+  (global-set-key (kbd "C-'") 'avy-goto-char-2)  
+  (global-set-key (kbd "M-g f") 'avy-goto-line)  
+  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
+  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
 #+end_src
 
 ** Visit files
@@ -592,8 +607,8 @@ http://xahlee.info/emacs/emacs/emacs_dired_tips.html
     :ensure nil
     :commands (dired dired-jump)
     :bind (("C-x C-j" . dired-jump))
-    :custom 
-    (dired-listing-switches "-agho --group-directories-first")
+    ;; :custom 
+    ;; (dired-listing-switches "-agho --group-directories-first")
     :config
     ;; (define-key dired-mode-map
     ;;   (kbd "B") 'dired-single-up-directory)
@@ -1638,7 +1653,7 @@ There are a number of other language servers for Python so if you find that =pyl
 (setq custom-file "~/.emacs.d/custom-file.el")
 (load-file custom-file)
 (put 'erase-buffer 'disabled nil)
-(put 'dired-find-alternate-file 'disabled nil)
+;;(put 'dired-find-alternate-file 'disabled nil)
 (put 'downcase-region 'disabled nil)
 #+end_src
 
