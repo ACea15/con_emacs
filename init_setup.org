@@ -1044,6 +1044,16 @@ sudo apt install pdf2svg
      (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
 #+end_src
 
+* Text
+#+begin_src emacs-lisp
+  (use-package synosaurus
+    :defer t
+    :ensure t
+    :custom
+    (synosaurus-choose-method 'default)
+    :config
+    (synosaurus-mode))
+#+end_src
 * Development
 ** General
 *** Shell-pop 
