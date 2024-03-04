@@ -185,8 +185,8 @@ https://www.emacswiki.org/emacs/WindMove
   (avy-setup-default))
 
   ;; Suggested bindings from avy github docs  
-  (global-set-key (kbd "C-:") 'avy-goto-char)  
-  (global-set-key (kbd "C-'") 'avy-goto-char-2)  
+  (global-set-key (kbd "C-`") 'avy-goto-char)  
+  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
   (global-set-key (kbd "M-g f") 'avy-goto-line)  
   (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
   (global-set-key (kbd "M-g e") 'avy-goto-word-0)
@@ -556,6 +556,26 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
 #+begin_src emacs-lisp
 (use-package ztree)
 #+end_src
+
+** Perspective
+#+begin_src emacs-lisp
+  (use-package perspective
+    ;;:bind
+    ;;("C-x M-b" . persp-list-buffers)         ; or use a nicer switcher, see below
+    :bind (("C-x b" . persp-switch-to-buffer*)
+           ("C-x k" . persp-kill-buffer*))
+    :custom
+    (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+    :init
+    (persp-mode))
+#+end_src
+
+** Zoom-frm
+#+begin_src emacs-lisp
+  ;; (use-package zoom-frm
+  ;;   )
+#+end_src
+
 * Custom functions
 ** copy line and file path
 https://gist.github.com/kristianhellquist/3082383
@@ -697,13 +717,6 @@ converted to PDF at the same location."
 
 #+end_src
 
-** Drag stuff
-#+begin_src emacs-lisp
-  (use-package drag-stuff
-      )
-#+end_src
-
-
 * Org Mode
 
 [[https://orgmode.org/][Org Mode]] is one of the hallmark features of Emacs.  It is a rich document editor, project planner, task and time tracker, blogging engine, and literate coding utility all wrapped up in one package.
@@ -726,7 +739,7 @@ converted to PDF at the same location."
 (setq org-todo-keywords
       '((sequence "TODO" "INPROGRESS" "|" "DONE")))
 
-(setq org-ellipsis " ⤵")
+;; (setq org-ellipsis " ⤵")
 #+end_src
 ** Export to ipython
 Steps taken:
@@ -950,7 +963,13 @@ sudo apt install pdf2svg
            :if-new
            (file+head "temp/${title}.org" "#+title: ${title}\n#+filetags: temporary \n")
            ;:immediate-finish t
+           :unnarrowed t)
+          ("c" "challenges" plain "%?"
+           :if-new
+           (file+head "challenges/${title}.org" "#+title: ${title}\n#+filetags: challenges \n")
+           ;:immediate-finish t
            :unnarrowed t)          
+          
           )
         )
 
@@ -1051,16 +1070,6 @@ sudo apt install pdf2svg
      (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
 #+end_src
 
-* Text
-#+begin_src emacs-lisp
-  (use-package synosaurus
-    :defer t
-    :ensure t
-    :custom
-    (synosaurus-choose-method 'default)
-    :config
-    (synosaurus-mode))
-#+end_src
 * Development
 ** General
 *** Shell-pop 
