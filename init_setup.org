@@ -46,6 +46,14 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+end_src
 
+error handling at initialisation, avoid showing warnings, never had a problem before until updating to version 29.2 in UBUNTU, snap 
+see: https://emacs.stackexchange.com/questions/78800/how-to-disable-automatic-appearance-of-warnings-buffer-in-emacs
+#+begin_src emacs-lisp
+  (setq warning-minimum-level :error)
+#+end_src
+
+
+
 ** Title frame
 
 #+begin_src emacs-lisp
@@ -1040,7 +1048,7 @@ sudo apt install pdf2svg
       )
      )
 #+end_src
-** Download
+** Download images
 #+begin_src emacs-lisp
   (use-package org-download
     :defer t
