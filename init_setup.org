@@ -18,20 +18,35 @@ https://stackoverflow.com/questions/3855862/setq-and-defvar-in-lisp
 * Tips for Use
 
  - The first time you load your configuration on a new machine, you’ll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly.
+
+   
 * System Setup
 
 ** Package manager
 Emacs has a built in package manager but it doesn't make it easy to automatically install packages on a new system the first time you pull down your configuration.  [[https://github.com/jwiegley/use-package][use-package]] is a really helpful package used in this configuration to make it a lot easier to automate the installation and configuration of everything else.
 
+#+NAME: package-archives
 #+begin_src emacs-lisp
+  ;; (add-to-list 'load-path "/home/acea/emacsPackages/org-mode/lisp")
   ;; ─────────────────────────────────── Set up 'package'  ───────────────────────
   ;; Initialize package sources
   (require 'package)
 
-  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                           ("org" . "https://orgmode.org/elpa/")
-                           ("elpa" . "https://elpa.gnu.org/packages/")))
+  ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  ;;                         ("org" . "https://orgmode.org/elpa/")
+  ;;                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
+  (setq package-archives '(
+
+  			 ("gnu" . "https://elpa.gnu.org/packages/")
+  			  
+  			 ("melpa" . "https://melpa.org/packages/")
+
+  			 ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+
+  			 ("org" . "http://orgmode.org/elpa/")
+  			  
+  			 )) 
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents))
@@ -46,10 +61,12 @@ Emacs has a built in package manager but it doesn't make it easy to automaticall
 
 #+end_src
 
+** WARNINNGS
 error handling at initialisation, avoid showing warnings, never had a problem before until updating to version 29.2 in UBUNTU, snap 
 see: https://emacs.stackexchange.com/questions/78800/how-to-disable-automatic-appearance-of-warnings-buffer-in-emacs
 #+begin_src emacs-lisp
   (setq warning-minimum-level :error)
+  ;;(setq warning-minimum-level :emergency)
 #+end_src
 
 
@@ -793,16 +810,36 @@ https://emacs.stackexchange.com/questions/12841/quickly-insert-source-blocks-in-
 (require 'org-tempo)
 #+end_src
 *** Run async
-Not working, fix here:
+Not working, isues here
 https://github.com/astahlman/ob-async/issues/75
+https://github.com/astahlman/ob-async/issues/98
+https://github.com/jwiegley/emacs-async/issues/165
+
+if installing org-package from [[package-archives]], the org repository (last one), it does work but keeps giving messages to install org from other repos. The version installed is 9.4.6 but even if I try to get the installation from the repo: git clone https://git.savannah.gnu.org/git/emacs/org-mode.git and follow installation: https://orgmode.org/manual/Installation.html
+
+and rollback to that version, ob-async wont work
+
 #+begin_src emacs-lisp
   (use-package ob-async)
 
-  (defun no-hide-overlays (orig-fun &rest args)
-    (setq org-babel-hide-result-overlays nil))
-  
-  (advice-add 'ob-async-org-babel-execute-src-block :before #'no-hide-overlays)
+  ;; (defun no-hide-overlays (orig-fun &rest args)
+  ;;   (setq org-babel-hide-result-overlays nil))
+
+  ;; (advice-add 'ob-async-org-babel-execute-src-block :before #'no-hide-overlays)
 #+end_src
+
+*** Company org mode
+https://github.com/xenodium/company-org-block
+#+begin_src emacs-lisp
+  (use-package company-org-block
+    :ensure t
+    :custom
+    (company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
+    :hook ((org-mode . (lambda ()
+                         (setq-local company-backends '(company-org-block))
+                         (company-mode +1)))))
+#+end_src
+
 ** Plantuml
 - Download plantuml.jar and add path to *plantuml* variable in ./init_vars.org
   https://plantuml.com/emacs
@@ -1059,6 +1096,36 @@ sudo apt install pdf2svg
   (setq-default org-download-image-dir "~/RoamNotes/img/")
   (add-hook 'dired-mode-hook 'org-download-enable)
 #+end_src
+* LLMs
+https://www.armindarvish.com/post/use_emacs_as_a_chatgpt_client/
+authorisation: https://www.gnu.org/software/emacs/manual/html_mono/auth.html
+set "machine api.openai.com login apikey password API_KEY" in ~/.authinfo file
+
+** gptel
+
+https://medium.com/@gregory.grubbs/enhance-your-knowledge-management-using-org-mode-and-chatgpt-with-gptel-96b18602811e
+#+begin_src emacs-lisp
+(use-package gptel
+   :config
+   (setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com"))
+   (setq gptel-default-mode 'org-mode)
+   (setq gptel-model "gpt-3.5-turbo")
+   )
+#+end_src
+
+** chatgpt-shell
+https://github.com/xenodium/chatgpt-shell
+
+#+begin_src emacs-lisp 
+  (use-package chatgpt-shell
+   :config
+   (setq chatgpt-shell-openai-key (auth-source-pick-first-password :host "api.openai.com"))
+   )
+
+  (use-package ob-chatgpt-shell)
+
+#+end_src
+
 * Pdf tools
 #+begin_src emacs-lisp
 
