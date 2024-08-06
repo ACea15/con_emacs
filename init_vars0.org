@@ -4,7 +4,7 @@
 Define these variables with respect to the local paths
 #+begin_src emacs-lisp
 (defvar *anaconda_env* "~/anaconda3/envs/")
-(defvar *emacs_config* "$HOME/programs/con_emacs/init_setup.org")
+(defvar *emacs_config* "~/projects/con_emacs/init_setup.org")
 (defvar *bash* "~/.bashrc")
 
 #+end_src

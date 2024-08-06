@@ -1308,7 +1308,7 @@ Try these commands with =M-x=:
   
 #+end_src
 
-****  dap-mode
+****  COMMENT dap-mode
 
 [[https://emacs-lsp.github.io/dap-mode/][dap-mode]] is an excellent package for bringing rich debugging capabilities to Emacs via the [[https://microsoft.github.io/debug-adapter-protocol/][Debug Adapter Protocol]].  You should check out the [[https://emacs-lsp.github.io/dap-mode/page/configuration/][configuration docs]] to learn how to configure the debugger for your language.  Also make sure to check out the documentation for the debug adapter to see what configuration parameters are available to use for your debug templates!
 
@@ -1380,8 +1380,8 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
     ;;   (global-company-mode t))
 
     (use-package company
-      ;;:after lsp-mode
-      :hook (lsp-mode . company-mode)
+      :after lsp-mode
+      ;;:hook (lsp-mode . company-mode)
       :bind (:map company-active-map
              ("<tab>" . company-complete-selection))
             (:map lsp-mode-map
@@ -1426,23 +1426,28 @@ https://github.com/kaz-yos/eval-in-repl
 
 #+begin_src emacs-lisp
 
-    (use-package projectile
-      :diminish projectile-mode
-      :config (projectile-mode)
-      :custom ((projectile-completion-system 'ivy))
-      :bind-keymap
-      ("C-c p" . projectile-command-map)
-      :init
-      (projectile-mode +1)
-      ;; NOTE: Set this to the folder where you keep your Git repos!
-      ;; (when (file-directory-p "~/Projects/Code")
-      ;;   (setq projectile-project-search-path '("~/Projects/Code")))
-      ;; (setq projectile-switch-project-action #'projectile-dired)
-  )
+    ;;   (use-package projectile
+    ;;     :diminish projectile-mode
+    ;;     :config (projectile-mode)
+    ;;     :custom ((projectile-completion-system 'ivy))
+    ;;     :bind-keymap
+    ;;     ("C-c p" . projectile-command-map)
+    ;;     :init
+    ;;     (projectile-mode +1)
+    ;;     ;; NOTE: Set this to the folder where you keep your Git repos!
+    ;;     ;; (when (file-directory-p "~/Projects/Code")
+    ;;     ;;   (setq projectile-project-search-path '("~/Projects/Code")))
+    ;;     ;; (setq projectile-switch-project-action #'projectile-dired)
+    ;; )
 
-    ;; (use-package counsel-projectile
-    ;;   :config (counsel-projectile-mode))
-
+      ;; (use-package counsel-projectile
+      ;;   :config (counsel-projectile-mode))
+  (use-package projectile
+    :ensure t
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+                ("C-c p" . projectile-command-map)))
 #+end_src
 
 ** Magit
