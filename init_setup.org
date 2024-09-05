@@ -1515,6 +1515,22 @@ https://github.com/kaz-yos/eval-in-repl
 (use-package json-mode)
 #+end_src
 
+** YAML
+#+begin_src emacs-lisp
+  ;;(use-package yaml-pro)
+  (use-package yaml-mode
+    :ensure t
+    :mode ("\\.yml\\'" "\\.yaml\\'"))
+  (use-package yafolding
+    :ensure t
+    :hook (yaml-mode . yafolding-mode)
+    :config
+    ;; (define-key yafolding-mode-map (kbd "C-c <C-return>") 'yafolding-hide-element)
+    ;; (define-key yafolding-mode-map (kbd "C-c <s-return>") 'yafolding-show-element)
+    ;; (define-key yafolding-mode-map (kbd "C-c <M-return>") 'yafolding-toggle-element)
+    )
+#+end_src
+
 ** Python
 *** Conda
 #+begin_src emacs-lisp
@@ -1577,6 +1593,10 @@ Make sure you have the =pyls= language server installed before trying =lsp-mode=
 
 There are a number of other language servers for Python so if you find that =pyls= doesn't work for you, consult the =lsp-mode= [[https://emacs-lsp.github.io/lsp-mode/page/languages/][language configuration documentation]] to try the others!
 
+ruff:
+https://astral.sh/blog/ruff-v0.4.5
+https://github.com/emacs-lsp/lsp-mode/issues/4451
+https://docs.astral.sh/ruff/editors/
 #+begin_src emacs-lisp
 
   ;; (use-package lsp-pyright
@@ -1632,6 +1652,8 @@ There are a number of other language servers for Python so if you find that =pyl
 
   ;;   :custom (blacken-line-length 79))
   ;; (setq dap-python-terminal "xterm -e ")
+  (with-eval-after-load 'lsp-mode
+  (setq lsp-ruff-lsp-server-command '("ruff" "server")))
 #+end_src
 
 *** docstrings
