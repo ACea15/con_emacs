@@ -744,10 +744,7 @@ converted to PDF at the same location."
 
 * Org Mode
 
-[[https://orgmode.org/][Org Mode]] is one of the hallmark features of Emacs.  It is a rich document editor, project planner, task and time tracker, blogging engine, and literate coding utility all wrapped up in one package.
-
 ** Basic Config
-
 #+begin_src emacs-lisp
 
 (use-package org-bullets
@@ -766,6 +763,19 @@ converted to PDF at the same location."
 
 ;; (setq org-ellipsis " ⤵")
 #+end_src
+
+** Markdown to org
+from here:
+https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
+#+begin_src emacs-lisp
+(defun fun/md-to-org-region (start end)
+  "Convert region from markdown to org, replacing selection"
+  (interactive "r")
+  (shell-command-on-region start end "pandoc -f markdown -t org" t t))
+#+end_src
+
+[[https://orgmode.org/][Org Mode]] is one of the hallmark features of Emacs.  It is a rich document editor, project planner, task and time tracker, blogging engine, and literate coding utility all wrapped up in one package.
+
 ** Export to ipython
 Steps taken:
 - cd .emacs.d/ && mkdir lisp && cd lisp/  && wget http://kitchingroup.cheme.cmu.edu/media/ox-ipynb.el
@@ -1668,7 +1678,7 @@ https://docs.astral.sh/ruff/editors/
 #+begin_src emacs-lisp
   ;; workon home
   ;; (setenv "WORKON_HOME" "~/anaconda3/envs/")
-  (setenv "WORKON_HOME" *anaconda_env*)
+  ;; (setenv "WORKON_HOME" *anaconda_env*)
   (defalias 'workon 'pyvenv-workon)
 
   ;(setq python-shell-interpreter "/usr/bin/python3")
