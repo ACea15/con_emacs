@@ -1637,6 +1637,10 @@ https://docs.astral.sh/ruff/editors/
     ;; (require 'dap-python)
     )
 
+  ;; make shell interpreter ipython (better completion)
+  (setq python-shell-interpreter "ipython"
+        python-shell-interpreter-args "-i --simple-prompt")
+
   ;; (use-package lsp-pyright
   ;;   :ensure t
   ;;   :hook (python-mode . (lambda ()
