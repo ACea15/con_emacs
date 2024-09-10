@@ -1637,10 +1637,6 @@ https://docs.astral.sh/ruff/editors/
     ;; (require 'dap-python)
     )
 
-  ;; make shell interpreter ipython (better completion)
-  (setq python-shell-interpreter "ipython"
-        python-shell-interpreter-args "-i --simple-prompt")
-
   ;; (use-package lsp-pyright
   ;;   :ensure t
   ;;   :hook (python-mode . (lambda ()
@@ -1682,8 +1678,13 @@ https://docs.astral.sh/ruff/editors/
 #+begin_src emacs-lisp
   ;; workon home
   ;; (setenv "WORKON_HOME" "~/anaconda3/envs/")
-  ;; (setenv "WORKON_HOME" *anaconda_env*)
+  (setenv "WORKON_HOME" *py_env*)
   (defalias 'workon 'pyvenv-workon)
+
+  ;; make shell interpreter ipython (better completion)
+  ;;(setq python-shell-interpreter "ipython"
+  ;; python-shell-interpreter-args "-i --simple-prompt"
+  ;;      )
 
   ;(setq python-shell-interpreter "/usr/bin/python3")
   ;; (setq python-shell-interpreter "ipython"
@@ -1695,13 +1696,26 @@ https://docs.astral.sh/ruff/editors/
     (pyvenv-mode t))
 
   ;; Set correct Python interpreter
-  (setq pyvenv-post-activate-hooks
-          (list (lambda ()
-                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
-  (setq pyvenv-post-deactivate-hooks
-          (list (lambda ()
-                  (setq python-shell-interpreter "python"))))
+  ;; (setq pyvenv-post-activate-hooks
+  ;;         (list (lambda ()
+  ;;                 (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/ipython")))))
+  ;; (setq pyvenv-post-deactivate-hooks
+  ;;         (list (lambda ()
+  ;;                 (setq python-shell-interpreter "python"))))
 
+  (defun toggle-python-shell-interpreter ()
+    "Toggle `python-shell-interpreter` and `python-shell-interpreter-args` between `python` and `ipython`."
+    (interactive)
+    (if (string-equal python-shell-interpreter "python")
+        (progn
+          (setq python-shell-interpreter "ipython")
+          (setq python-shell-interpreter-args "--simple-prompt -i"))
+      (progn
+        (setq python-shell-interpreter "python")
+        (setq python-shell-interpreter-args "-i")))
+    (message "Switched to interpreter: %s with args: %s"
+             python-shell-interpreter python-shell-interpreter-args))
+  
 #+end_src
 
 *** Set_trace
