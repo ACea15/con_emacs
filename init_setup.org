@@ -130,6 +130,20 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
   ;;    :url "https://github.com/quelpa/quelpa-use-package.git"))
   ;;(require 'quelpa-use-package)
 #+END_SRC
+* Custom functions
+#+begin_src emacs-lisp
+  (defun fac-remove-quotes-from-region (start end)
+    "Remove surrounding double quotes from words in the selected region."
+    (interactive "r")
+    (save-excursion
+      (goto-char start)
+      (while (re-search-forward "\"\\([^\"]+\\)\"" end t)
+        (replace-match "\\1" nil nil)
+        )
+      )
+    )
+
+#+end_src
 * Keybindings and Buffer-Navigation
 
 ** Beginning of line
@@ -1106,6 +1120,18 @@ sudo apt install pdf2svg
   (setq-default org-download-image-dir "~/RoamNotes/img/")
   (add-hook 'dired-mode-hook 'org-download-enable)
 #+end_src
+
+** python notebook
+use-package wont work, git clone to .emacs.d/repos
+https://github.com/jkitchin/ox-ipynb
+#+begin_src emacs-lisp
+  ;; (use-package ox-ipynb
+  ;;   )
+  (add-to-list 'load-path "~/.emacs.d/repos/ox-ipynb")
+  (require 'ox-ipynb)
+  (setq ox-ipynb-preprocess-hook '((lambda () (org-ref-csl-preprocess-buffer 'html))))
+#+end_src
+
 * LLMs
 https://www.armindarvish.com/post/use_emacs_as_a_chatgpt_client/
 authorisation: https://www.gnu.org/software/emacs/manual/html_mono/auth.html
@@ -1764,6 +1790,15 @@ https://docs.astral.sh/ruff/editors/
   ;;         )
   ;;       )
 #+end_src
+
+*** pytest
+
+https://github.com/wbolster/emacs-python-pytest
+
+#+begin_src emacs-lisp
+  (use-package python-pytest)
+#+end_src
+
 ** Cpp
 
 #+begin_src emacs-lisp
