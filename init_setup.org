@@ -1121,7 +1121,7 @@ sudo apt install pdf2svg
   (add-hook 'dired-mode-hook 'org-download-enable)
 #+end_src
 
-** python notebook
+** COMMENT python notebook
 use-package wont work, git clone to .emacs.d/repos
 https://github.com/jkitchin/ox-ipynb
 #+begin_src emacs-lisp
@@ -1688,8 +1688,9 @@ https://docs.astral.sh/ruff/editors/
 
   ;;   :custom (blacken-line-length 79))
   ;; (setq dap-python-terminal "xterm -e ")
-  (with-eval-after-load 'lsp-mode
-  (setq lsp-ruff-lsp-server-command '("ruff" "server")))
+
+  ;; (with-eval-after-load 'lsp-mode
+  ;; (setq lsp-ruff-lsp-server-command '("ruff" "server")))
 #+end_src
 
 *** docstrings
