@@ -1038,7 +1038,7 @@ sudo apt install pdf2svg
            (file+head "challenges/${title}.org" "#+title: ${title}\n#+filetags: challenges \n")
            ;:immediate-finish t
            :unnarrowed t)          
-          
+
           )
         )
 
@@ -1101,10 +1101,11 @@ sudo apt install pdf2svg
       ;; The WM can handle splits
       ;org-noter-notes-window-location 'other-frame
       ;; Please stop opening frames
-      ;org-noter-always-create-frame nil
+      org-noter-always-create-frame nil
       ;; I want to see the whole file
       ;org-noter-hide-other nil
       ;; Everything is relative to the main notes file
+      org-noter-notes-search-path (list "~/RoamNotes/refs/")
       ;org-noter-notes-search-path org-directory
       )
      )
