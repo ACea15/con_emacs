@@ -131,8 +131,9 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
   ;;(require 'quelpa-use-package)
 #+END_SRC
 * Custom functions
+** remove quotes
 #+begin_src emacs-lisp
-  (defun fac-remove-quotes-from-region (start end)
+  (defun fac/remove-quotes-from-region (start end)
     "Remove surrounding double quotes from words in the selected region."
     (interactive "r")
     (save-excursion
@@ -144,7 +145,117 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
     )
 
 #+end_src
-* Keybindings and Buffer-Navigation
+
+** Markdown to org
+WANRING: you need markdown
+from here:
+https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
+#+begin_src emacs-lisp
+(defun fac/md-to-org-region (start end)
+  "Convert region from markdown to org, replacing selection"
+  (interactive "r")
+  (shell-command-on-region start end "pandoc -f markdown -t org" t t))
+#+end_src
+
+
+
+* Keybindings
+
+#+begin_src emacs-lisp
+  (use-package cheatsheet)
+
+  (cheatsheet-add :group 'Common
+                  :key "C-x C-c"
+                  :description "leave Emacs.")  
+#+end_src
+
+
+** Dired
+#+begin_src emacs-lisp
+  (define-key dired-mode-map (kbd "z") 'dired-get-size)
+  (define-key dired-mode-map
+              (kbd "C-c h") 'dired-hide-dotfiles-mode)
+#+end_src
+
+** ibuffer
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+#+end_src
+
+** avy
+
+#+begin_src emacs-lisp
+  ;; Suggested bindings from avy github docs  
+  (global-set-key (kbd "C-`") 'avy-goto-char)  
+  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
+  (global-set-key (kbd "M-g f") 'avy-goto-line)  
+  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
+  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
+#+end_src
+
+** Chatgpt
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c C-g C-c") 'chatgpt-shell)  
+#+end_src
+
+** Move between windows
+
+https://www.emacswiki.org/emacs/WindMove
+
+#+begin_src emacs-lisp
+
+  ;; Move between windows: shit+arrows
+  (when (fboundp 'windmove-default-keybindings)
+    (windmove-default-keybindings))
+
+
+  ;; Make windmove work in Org mode:
+  (add-hook 'org-shiftup-final-hook 'windmove-up)
+  (add-hook 'org-shiftleft-final-hook 'windmove-left)
+  (add-hook 'org-shiftdown-final-hook 'windmove-down)
+  (add-hook 'org-shiftright-final-hook 'windmove-right)
+
+  ;; (windmove-default-keybindings 'control)
+#+end_src
+
+** C-c C-g
+#+begin_src emacs-lisp
+
+  (defun open-init-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *emacs_config*))
+  (bind-key "C-c C-g e" #'open-init-file)
+
+  (defun open-bash-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *bash*))
+  (bind-key "C-c C-g b" #'open-bash-file)
+
+  (bind-key "C-c C-g n" 'display-line-numbers-mode)
+
+#+end_src
+
+** Hydra
+
+This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
+
+#+begin_src emacs-lisp
+
+  ;; (use-package hydra)
+
+  ;; (defhydra hydra-text-scale (:timeout 4)
+  ;;   "scale text"
+  ;;   ("j" text-scale-increase "in")
+  ;;   ("k" text-scale-decrease "out")
+  ;;   ("f" nil "finished" :exit t))
+
+#+end_src
+
+
+
+* Buffer-Navigation
 
 ** Beginning of line
 #+begin_src emacs-lisp
@@ -188,66 +299,12 @@ point reaches the beginning or end of the buffer, stop there."
 
 #+end_src
 
-** IBuffer
-
-#+begin_src emacs-lisp
-
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-
-#+end_src
-
-** Move between windows
-
-https://www.emacswiki.org/emacs/WindMove
-
-#+begin_src emacs-lisp
-
-;; Move between windows: shit+arrows
-(when (fboundp 'windmove-default-keybindings)
-  (windmove-default-keybindings))
-
-
-;; Make windmove work in Org mode:
-(add-hook 'org-shiftup-final-hook 'windmove-up)
-(add-hook 'org-shiftleft-final-hook 'windmove-left)
-(add-hook 'org-shiftdown-final-hook 'windmove-down)
-(add-hook 'org-shiftright-final-hook 'windmove-right)
-
-;; (windmove-default-keybindings 'control)
-#+end_src
-
-** jump
+** Avy
 
 #+begin_src emacs-lisp
   (use-package avy
   :config
   (avy-setup-default))
-
-  ;; Suggested bindings from avy github docs  
-  (global-set-key (kbd "C-`") 'avy-goto-char)  
-  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
-  (global-set-key (kbd "M-g f") 'avy-goto-line)  
-  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
-  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
-#+end_src
-
-** Visit files
-
-#+begin_src emacs-lisp
-
-(defun open-init-file ()
-  "Open this very file."
-  (interactive)
-  (find-file *emacs_config*))
-(bind-key "C-c C-g e" #'open-init-file)
-
-(defun open-bash-file ()
-  "Open this very file."
-  (interactive)
-  (find-file *bash*))
-(bind-key "C-c C-g b" #'open-bash-file)
-
-
 #+end_src
 
 ** Bookmarks
@@ -286,7 +343,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
   ;; (global-linum-mode t)
   (add-hook 'prog-mode-hook (lambda() (display-line-numbers-mode 1)))
   (add-hook 'text-mode-hook (lambda() (display-line-numbers-mode 1)))
-  (bind-key "C-c C-g n" 'display-line-numbers-mode)
 
   ;; Show column and line number 
   (line-number-mode t)
@@ -447,14 +503,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+end_src
 
-** Key bindings
-*** General
-
-#+begin_src emacs-lisp
-  (use-package general)
-
-#+end_src
-
 ** Helpful Help Commands
 
 [[https://github.com/Wilfred/helpful][Helpful]] adds a lot of very helpful (get it?) information to Emacs' =describe-= command buffers.  For example, if you use =describe-function=, you will not only get the documentation about the function, you will also see the source code of the function and where it gets used in other places in the Emacs configuration.  It is very useful for figuring out how things work in Emacs.
@@ -462,22 +510,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
 #+begin_src emacs-lisp
 
   (use-package helpful)
-
-#+end_src
-
-** Text Scaling
-
-This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
-
-#+begin_src emacs-lisp
-
-  ;; (use-package hydra)
-
-  ;; (defhydra hydra-text-scale (:timeout 4)
-  ;;   "scale text"
-  ;;   ("j" text-scale-increase "in")
-  ;;   ("k" text-scale-decrease "out")
-  ;;   ("f" nil "finished" :exit t))
 
 #+end_src
 
@@ -626,7 +658,7 @@ https://gist.github.com/kristianhellquist/3082383
   ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
   ;;   (x-select-text path-with-line-number)
   ;;   (message (concat path-with-line-number " copied to clipboard"))))
-  (defun copy-current-line-position-to-clipboard ()
+  (defun fac/copy-current-line-position-to-clipboard ()
     "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
     (interactive)
     (let ((path-with-line-number
@@ -634,9 +666,10 @@ https://gist.github.com/kristianhellquist/3082383
       (kill-new path-with-line-number)
       (message (concat path-with-line-number " copied to clipboard"))))
 
-  ;;(define-key global-map (kbd "C-c C-g C-l") 'copy-current-line-position-to-clipboard)
+  ;;(define-key global-map (kbd "C-c C-g C-l") 'fac/copy-current-line-position-to-clipboard)
   (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
 #+end_src
+
 ** copy path to current file
 #+begin_src emacs-lisp
   (defun er-copy-file-name-to-clipboard ()
@@ -651,6 +684,7 @@ https://gist.github.com/kristianhellquist/3082383
 
   (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
 #+end_src
+
 
 * System navigation and output
 
@@ -684,9 +718,7 @@ http://xahlee.info/emacs/emacs/emacs_dired_tips.html
 
   (use-package dired-hide-dotfiles
     :hook (dired-mode . dired-hide-dotfiles-mode)
-    :config
-    (define-key dired-mode-map
-      (kbd "C-c h") 'dired-hide-dotfiles-mode))
+  )
 
   (defun dired-get-size ()
     (interactive)
@@ -698,10 +730,8 @@ http://xahlee.info/emacs/emacs/emacs_dired_tips.html
                    (re-search-backward "\\(^[0-9.,]+[A-Za-z]+\\).*total$")
                    (match-string 1))))))
 
-  (define-key dired-mode-map (kbd "z") 'dired-get-size)
   (use-package all-the-icons-dired
     :hook (dired-mode . all-the-icons-dired-mode))
-
 
   ;; (use-package dired+
   ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
@@ -777,18 +807,6 @@ converted to PDF at the same location."
 
 ;; (setq org-ellipsis " ⤵")
 #+end_src
-
-** Markdown to org
-from here:
-https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
-#+begin_src emacs-lisp
-(defun fun/md-to-org-region (start end)
-  "Convert region from markdown to org, replacing selection"
-  (interactive "r")
-  (shell-command-on-region start end "pandoc -f markdown -t org" t t))
-#+end_src
-
-[[https://orgmode.org/][Org Mode]] is one of the hallmark features of Emacs.  It is a rich document editor, project planner, task and time tracker, blogging engine, and literate coding utility all wrapped up in one package.
 
 ** Export to ipython
 Steps taken:
@@ -1527,25 +1545,26 @@ https://github.com/kaz-yos/eval-in-repl
 
 #+begin_src emacs-lisp
 
-;; ───────────────────────────────────
-; Sidebar navigation with extras
-(use-package treemacs  
-  :config
-  (treemacs-filewatch-mode t)
-  (treemacs-git-mode 'extended)
-  (treemacs-follow-mode -1)
-  (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
-  :bind (("C-c C-g C-t" . treemacs)))
-;(bind-key "C-c C-g C-t" treemacs)
-; Unifies projectile and treemacs
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-)
+  ;; ───────────────────────────────────
+  ; Sidebar navigation with extras
+  (use-package treemacs  
+    :config
+    (treemacs-filewatch-mode t)
+    (treemacs-git-mode 'extended)
+    (treemacs-follow-mode -1)
+    (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
+    :bind (("C-c C-g C-t" . treemacs))
+    )
+  ;(bind-key "C-c C-g C-t" treemacs)
+  ; Unifies projectile and treemacs
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+  )
 
-; Makes treemacs show different colors for committed, staged and modified files
-(use-package treemacs-magit
-  :after (treemacs magit))
-
+  ; Makes treemacs show different colors for committed, staged and modified files
+  (use-package treemacs-magit
+    :after (treemacs magit))
+  
 #+end_src
 ** Json
 
