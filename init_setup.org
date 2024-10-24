@@ -70,7 +70,6 @@ see: https://emacs.stackexchange.com/questions/78800/how-to-disable-automatic-ap
 #+end_src
 
 
-
 ** Title frame
 
 #+begin_src emacs-lisp
@@ -155,102 +154,6 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
   "Convert region from markdown to org, replacing selection"
   (interactive "r")
   (shell-command-on-region start end "pandoc -f markdown -t org" t t))
-#+end_src
-
-
-
-* Keybindings
-
-#+begin_src emacs-lisp
-  (use-package cheatsheet)
-
-  (cheatsheet-add :group 'Common
-                  :key "C-x C-c"
-                  :description "leave Emacs.")  
-#+end_src
-
-
-** Dired
-#+begin_src emacs-lisp
-  (define-key dired-mode-map (kbd "z") 'dired-get-size)
-  (define-key dired-mode-map
-              (kbd "C-c h") 'dired-hide-dotfiles-mode)
-#+end_src
-
-** ibuffer
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-#+end_src
-
-** avy
-
-#+begin_src emacs-lisp
-  ;; Suggested bindings from avy github docs  
-  (global-set-key (kbd "C-`") 'avy-goto-char)  
-  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
-  (global-set-key (kbd "M-g f") 'avy-goto-line)  
-  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
-  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
-#+end_src
-
-** Chatgpt
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-c C-g C-c") 'chatgpt-shell)  
-#+end_src
-
-** Move between windows
-
-https://www.emacswiki.org/emacs/WindMove
-
-#+begin_src emacs-lisp
-
-  ;; Move between windows: shit+arrows
-  (when (fboundp 'windmove-default-keybindings)
-    (windmove-default-keybindings))
-
-
-  ;; Make windmove work in Org mode:
-  (add-hook 'org-shiftup-final-hook 'windmove-up)
-  (add-hook 'org-shiftleft-final-hook 'windmove-left)
-  (add-hook 'org-shiftdown-final-hook 'windmove-down)
-  (add-hook 'org-shiftright-final-hook 'windmove-right)
-
-  ;; (windmove-default-keybindings 'control)
-#+end_src
-
-** C-c C-g
-#+begin_src emacs-lisp
-
-  (defun open-init-file ()
-    "Open this very file."
-    (interactive)
-    (find-file *emacs_config*))
-  (bind-key "C-c C-g e" #'open-init-file)
-
-  (defun open-bash-file ()
-    "Open this very file."
-    (interactive)
-    (find-file *bash*))
-  (bind-key "C-c C-g b" #'open-bash-file)
-
-  (bind-key "C-c C-g n" 'display-line-numbers-mode)
-
-#+end_src
-
-** Hydra
-
-This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
-
-#+begin_src emacs-lisp
-
-  ;; (use-package hydra)
-
-  ;; (defhydra hydra-text-scale (:timeout 4)
-  ;;   "scale text"
-  ;;   ("j" text-scale-increase "in")
-  ;;   ("k" text-scale-decrease "out")
-  ;;   ("f" nil "finished" :exit t))
-
 #+end_src
 
 
@@ -1860,6 +1763,101 @@ https://github.com/wbolster/emacs-python-pytest
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.inl\\'" . c++-mode))
 #+end_src
+* Keybindings
+
+#+begin_src emacs-lisp
+  (use-package cheatsheet)
+
+  (cheatsheet-add :group 'Common
+                  :key "C-x C-c"
+                  :description "leave Emacs.")  
+#+end_src
+
+
+** Dired
+#+begin_src emacs-lisp
+  (define-key dired-mode-map (kbd "z") 'dired-get-size)
+  (define-key dired-mode-map
+              (kbd "C-c h") 'dired-hide-dotfiles-mode)
+#+end_src
+
+** ibuffer
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+#+end_src
+
+** avy
+
+#+begin_src emacs-lisp
+  ;; Suggested bindings from avy github docs  
+  (global-set-key (kbd "C-`") 'avy-goto-char)  
+  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
+  (global-set-key (kbd "M-g f") 'avy-goto-line)  
+  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
+  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
+#+end_src
+
+** Chatgpt
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c C-g C-c") 'chatgpt-shell)  
+#+end_src
+
+** Move between windows
+
+https://www.emacswiki.org/emacs/WindMove
+
+#+begin_src emacs-lisp
+
+  ;; Move between windows: shit+arrows
+  (when (fboundp 'windmove-default-keybindings)
+    (windmove-default-keybindings))
+
+
+  ;; Make windmove work in Org mode:
+  (add-hook 'org-shiftup-final-hook 'windmove-up)
+  (add-hook 'org-shiftleft-final-hook 'windmove-left)
+  (add-hook 'org-shiftdown-final-hook 'windmove-down)
+  (add-hook 'org-shiftright-final-hook 'windmove-right)
+
+  ;; (windmove-default-keybindings 'control)
+#+end_src
+
+** C-c C-g
+#+begin_src emacs-lisp
+
+  (defun open-init-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *emacs_config*))
+  (bind-key "C-c C-g e" #'open-init-file)
+
+  (defun open-bash-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *bash*))
+  (bind-key "C-c C-g b" #'open-bash-file)
+
+  (bind-key "C-c C-g n" 'display-line-numbers-mode)
+
+#+end_src
+
+** Hydra
+
+This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
+
+#+begin_src emacs-lisp
+
+  ;; (use-package hydra)
+
+  ;; (defhydra hydra-text-scale (:timeout 4)
+  ;;   "scale text"
+  ;;   ("j" text-scale-increase "in")
+  ;;   ("k" text-scale-decrease "out")
+  ;;   ("f" nil "finished" :exit t))
+
+#+end_src
+
+
 * Custom file
 
 #+begin_src emacs-lisp
