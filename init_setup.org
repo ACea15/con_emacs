@@ -711,6 +711,13 @@ converted to PDF at the same location."
 ;; (setq org-ellipsis " ⤵")
 #+end_src
 
+** Contrib
+#+begin_src emacs-lisp
+  (use-package org-contrib)
+  (require 'ox-extra)
+  (ox-extras-activate '(latex-header-blocks ignore-headlines))  
+#+end_src
+
 ** Export to ipython
 Steps taken:
 - cd .emacs.d/ && mkdir lisp && cd lisp/  && wget http://kitchingroup.cheme.cmu.edu/media/ox-ipynb.el
@@ -1762,6 +1769,7 @@ https://github.com/wbolster/emacs-python-pytest
 *** .inl files
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.inl\\'" . c++-mode))
+  (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-mode))
 #+end_src
 * Keybindings
 
