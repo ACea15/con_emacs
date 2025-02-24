@@ -3,8 +3,9 @@
 
 Define these variables with respect to the local paths
 #+begin_src emacs-lisp
-(defvar *anaconda_env* "~/anaconda3/envs/")
-(defvar *emacs_config* "~/projects/con_emacs/init_setup.org")
-(defvar *bash* "~/.bashrc")
-
+  (defvar *anaconda_env* "~/anaconda3/envs/")
+  (defvar *py_env* "~/.pyenv/versions")
+  (defvar *emacs_config* "~/projects/con_emacs/init_setup.org")
+  (defvar *bash* "~/.zshrc")
+  (defvar *plantuml* "~/Downloads/plantuml-1.2023.12.jar")
 #+end_src

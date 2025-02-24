@@ -129,7 +129,24 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
   ;;    :url "https://github.com/quelpa/quelpa-use-package.git"))
   ;;(require 'quelpa-use-package)
 #+END_SRC
+* Cheatsheet
+
+#+begin_src emacs-lisp
+  (cheatsheet-add :group 'Common
+                  :key "C-x C-c"
+                  :description "leave Emacs.")
+  (cheatsheet-add :group 'Common
+                  :key "C-x C-c"
+                  :description "leave Emacs.")  
+#+end_src
+
 * Custom functions
+#+begin_src emacs-lisp
+  (cheatsheet-add :group 'Custom
+                  :key "M-x fac/..."
+                  :description "Functions ac...")
+#+end_src
+
 ** remove quotes
 #+begin_src emacs-lisp
   (defun fac/remove-quotes-from-region (start end)
@@ -156,9 +173,21 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
   (shell-command-on-region start end "pandoc -f markdown -t org" t t))
 #+end_src
 
-
-
 * Buffer-Navigation
+#+begin_src emacs-lisp
+  (cheatsheet-add :group 'Navigation
+                  :key "C-a"
+                  :description "Go to first character of line")
+  (cheatsheet-add :group 'Navigation
+                  :key "C-a C-a"
+                  :description "Go to beginning of line")
+  (cheatsheet-add :group 'Navigation
+                  :key "M-[+-]"
+                  :description "Scroll up/down by 4")
+  (cheatsheet-add :group 'Navigation
+                  :key "M-g M-<up,down,left..>"
+                  :description "Move buffers to other windows")  
+#+end_src
 
 ** Beginning of line
 #+begin_src emacs-lisp
@@ -202,26 +231,6 @@ point reaches the beginning or end of the buffer, stop there."
 
 #+end_src
 
-** Avy
-
-#+begin_src emacs-lisp
-  (use-package avy
-  :config
-  (avy-setup-default))
-#+end_src
-
-** Bookmarks
-
-http://xahlee.info/emacs/emacs/bookmark.html
-
-#+begin_src emacs-lisp
-
-  ;; (setq inhibit-splash-screen t)
-  ;; (require 'bookmark)
-  ;; (list-bookmarks)
-  ;; (switch-to-buffer "*Bookmark List*")
-
-#+end_src
 ** Moving buffers
 #+begin_src emacs-lisp
 
@@ -236,6 +245,24 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+end_src
 
+* Bookmarks
+
+#+begin_src emacs-lisp
+  (cheatsheet-add :group 'Navigation
+                  :key "C-x r .."
+                  :description "bookmarks..")
+#+end_src
+
+http://xahlee.info/emacs/emacs/bookmark.html
+
+#+begin_src emacs-lisp
+
+  ;; (setq inhibit-splash-screen t)
+  ;; (require 'bookmark)
+  ;; (list-bookmarks)
+  ;; (switch-to-buffer "*Bookmark List*")
+
+#+end_src
 * UI Configuration
 ** General settings
 #+begin_src emacs-lisp
@@ -1756,31 +1783,20 @@ https://github.com/wbolster/emacs-python-pytest
 (setq
  ;; use gdb-many-windows by default
  gdb-many-windows t
-
  ;; Non-nil means display source file containing the main routine at startup
  gdb-show-main t
  )
 #+end_src
 
-#+begin_src emacs-lisp
 
-;
-#+end_src
 *** .inl files
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.inl\\'" . c++-mode))
   (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-mode))
 #+end_src
-* Keybindings
 
-#+begin_src emacs-lisp
-  (use-package cheatsheet)
 
-  (cheatsheet-add :group 'Common
-                  :key "C-x C-c"
-                  :description "leave Emacs.")  
-#+end_src
-
+https://github.com/alexluigit/dirvish
 
 ** Dired
 #+begin_src emacs-lisp
