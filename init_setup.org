@@ -4,7 +4,7 @@
 ###+SETUPFILE: "./header_setup.org"
 
 * Let the Emacs begin!
-** 
+* 
 This is the configuration we've been building in the *Emacs From Scratch* series, now written as an Org Mode document.  This file generates [[file:init.el][init.el]] which can be loaded by Emacs at startup.
 
 *NOTE:* 
@@ -69,7 +69,6 @@ see: https://emacs.stackexchange.com/questions/78800/how-to-disable-automatic-ap
   ;;(setq warning-minimum-level :emergency)
 #+end_src
 
-
 ** Title frame
 
 #+begin_src emacs-lisp
@@ -132,12 +131,26 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
 * Cheatsheet
 
 #+begin_src emacs-lisp
+  (use-package cheatsheet)
   (cheatsheet-add :group 'Common
                   :key "C-x C-c"
                   :description "leave Emacs.")
   (cheatsheet-add :group 'Common
-                  :key "C-x C-c"
-                  :description "leave Emacs.")  
+                  :key "C-x C-s"
+                  :description "Save file in buffer")
+  (cheatsheet-add :group 'Common
+                  :key "C-x s"
+                  :description "Save unsaved buffers in session")
+  (cheatsheet-add :group 'Help
+                  :key "M-x describe"
+                  :description "Help on variables, modes etc")  
+  (cheatsheet-add :group 'Help
+                  :key "C-h m"
+                  :description "Show major mode key bindings, minor modes enabled..")  
+  (cheatsheet-add :group 'Help
+                  :key "C-h v"
+                  :description "Decribe variable")  
+  
 #+end_src
 
 * Custom functions
@@ -145,6 +158,10 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
   (cheatsheet-add :group 'Custom
                   :key "M-x fac/..."
                   :description "Functions ac...")
+  (cheatsheet-add :group 'Buffers
+                  :key "C-c a [number]"
+                  :description "Split frame in n buffers")  
+  
 #+end_src
 
 ** remove quotes
@@ -172,6 +189,74 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
   (interactive "r")
   (shell-command-on-region start end "pandoc -f markdown -t org" t t))
 #+end_src
+
+** Buffer layout templates
+#+begin_src emacs-lisp
+  (defun fac/split-window-three-columns ()
+    "Split the current window into three columns."
+    (interactive)
+    ;; Ensure there is only one window to begin with
+    (delete-other-windows)
+    ;; Split the window twice into three columns
+    (split-window-right)
+    (split-window-right)
+    ;; Adjust sizes if necessary
+    (balance-windows)
+    )  ; This ensures the windows are balanced equally
+
+  (defun fac/split-window-six ()
+    "Split the current window into six panes: three columns and two rows in each column."
+    (interactive)
+    ;; Ensure there is only one window to begin with
+    (delete-other-windows)
+    ;; First split into three columns
+    (command-execute 'split-window-horizontally)
+    (command-execute 'split-window-horizontally)
+    (command-execute 'split-window-vertically)
+    (command-execute 'other-window)
+    (command-execute 'other-window)
+    (command-execute 'split-window-vertically)
+    (command-execute 'other-window)
+    (command-execute 'other-window)
+    (command-execute 'split-window-vertically)
+    (balance-windows)
+    )
+
+  (defun fac/split-window-four ()
+    "Split the current window into six panes: three columns and two rows in each column."
+    (interactive)
+    ;; Ensure there is only one window to begin with
+    (delete-other-windows)
+    ;; First split into three columns
+    (command-execute 'split-window-right)  
+    (command-execute 'split-window-below)
+    (command-execute 'other-window)
+    (command-execute 'other-window)  
+    (command-execute 'split-window-below)
+    (balance-windows)
+  )
+
+  (defun fac/split-window-fourr ()
+    "Split the current window into six panes: three columns and two rows in each column."
+    (interactive)
+    ;; Ensure there is only one window to begin with
+    (delete-other-windows)
+    ;; First split into three columns
+    (split-window-right 90)  
+    (command-execute 'split-window-below)
+    (command-execute 'other-window)
+    (command-execute 'other-window)  
+    (command-execute 'split-window-right)
+    ;(balance-windows)
+  )
+
+  (global-set-key (kbd "C-c a 3") 'fac/split-window-three-columns)
+  (global-set-key (kbd "C-c a 4") 'fac/split-window-four)
+  (global-set-key (kbd "C-c a 5") 'fac/split-window-fourr)  
+  (global-set-key (kbd "C-c a 6") 'fac/split-window-six)
+
+#+end_src
+
 
 * Buffer-Navigation
 #+begin_src emacs-lisp
@@ -614,7 +699,6 @@ https://gist.github.com/kristianhellquist/3082383
 
   (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
 #+end_src
-
 
 * System navigation and output
 
@@ -1301,36 +1385,56 @@ Try these commands with =M-x=:
   
 #+end_src
 
-****  COMMENT dap-mode
+**** COMMENT dap-mode
 
 [[https://emacs-lsp.github.io/dap-mode/][dap-mode]] is an excellent package for bringing rich debugging capabilities to Emacs via the [[https://microsoft.github.io/debug-adapter-protocol/][Debug Adapter Protocol]].  You should check out the [[https://emacs-lsp.github.io/dap-mode/page/configuration/][configuration docs]] to learn how to configure the debugger for your language.  Also make sure to check out the documentation for the debug adapter to see what configuration parameters are available to use for your debug templates!
 
+
 #+begin_src emacs-lisp
 
-    (use-package dap-mode
-      ;; Uncomment the config below if you want all UI panes to be hidden by default!
-      :custom
-      ;;(lsp-enable-dap-auto-configure nil)
-      ;; (dap-ui-mode 1)
-      (dap-auto-configure-features '(tooltip))
-      ;; :config
-      ;; (dap-ui-mode 1)
+  (use-package dap-mode
+    :after lsp-mode
+    ;; Uncomment the config below if you want all UI panes to be hidden by default!
+    :custom
+    ;;(lsp-enable-dap-auto-configure nil)
+    ;; (dap-ui-mode 1)
+    (dap-auto-configure-features '(tooltip))
+    ;; :config
+    ;; (dap-ui-mode 1)
 
-      :config
-      ;; Set up Node debugging
+    :config
+    ;; Set up Node debugging
 
-      (require 'dap-lldb)
-      (require 'dap-cpptools)
-      (require 'dap-python)
-      (dap-cpptools-setup) ;; Automatically installs Node debug adapter if needed
-      (dap-ui-mode 1)
-      ;; Bind `C-c l d` to `dap-hydra` for easy access
-      ;; (general-define-key
-      ;;   :keymaps 'lsp-mode-map
-      ;;   :prefix lsp-keymap-prefix
-      ;;   "d" '(dap-hydra t :wk "debugger"))
-      ;;;:bind-keymap (("C-c l d" . dap-hydra))
-      )
+    (require 'dap-lldb)
+    (require 'dap-cpptools)
+    (require 'dap-python)
+    (dap-cpptools-setup) ;; Automatically installs Node debug adapter if needed
+    (dap-ui-mode 1)
+    ;; Bind `C-c l d` to `dap-hydra` for easy access
+    ;; (general-define-key
+    ;;   :keymaps 'lsp-mode-map
+    ;;   :prefix lsp-keymap-prefix
+    ;;   "d" '(dap-hydra t :wk "debugger"))
+    ;;;:bind-keymap (("C-c l d" . dap-hydra))
+    )
+  (setq dap-python-debugger 'debugpy)
+  ;; Temporal fix
+  ;; (defun dap-python--pyenv-executable-find (command)
+  ;;   (with-venv (executable-find "python3")))
+
+  ;; (dap-register-debug-template
+  ;; "Python :: MyProject Main"
+  ;; (list :type "python"
+  ;;       :args ""
+  ;;       :cwd "~/myproject/"
+  ;;       :justMyCode :json-false
+  ;;       :module nil
+  ;;       :env '(("DEV" . "1"))
+  ;;       ;:target-module (expand-file-name "~/src/myapp/.env/bin/myapp")
+  ;;       :program "~/myproject/main.py"
+  ;;       :request "launch"
+  ;;       :name "Python :: MyProject Main"))
+
 
   ;;   (setq dap-auto-configure-mode t)
 
@@ -1526,15 +1630,16 @@ https://github.com/kaz-yos/eval-in-repl
 #+end_src
 
 ** Python
-*** Conda
+https://andrewfavia.dev/posts/emacs-as-python-ide/
+*** COMMENT Conda
 #+begin_src emacs-lisp
-  ;; (use-package conda
-  ;; :config (progn
-  ;;           (conda-env-initialize-interactive-shells)
-  ;;           (conda-env-initialize-eshell)
-  ;;           ;(conda-env-autoactivate-mode t)
-  ;;           (setq conda-env-home-directory (expand-file-name "~/.conda/"))
-  ;;           (custom-set-variables '(conda-anaconda-home "/Users/acea/opt/anaconda3/"))))
+  (use-package conda
+  :config (progn
+            (conda-env-initialize-interactive-shells)
+            (conda-env-initialize-eshell)
+            ;(conda-env-autoactivate-mode t)
+            (setq conda-env-home-directory (expand-file-name "~/.conda/"))
+            (custom-set-variables '(conda-anaconda-home "/Users/acea/opt/anaconda3/"))))
 
 #+end_src
 *** Notebook
@@ -1592,9 +1697,7 @@ https://astral.sh/blog/ruff-v0.4.5
 https://github.com/emacs-lsp/lsp-mode/issues/4451
 https://docs.astral.sh/ruff/editors/
 #+begin_src emacs-lisp
-
   ;; (use-package lsp-pyright
-
   ;;   :hook (python-mode . (lambda ()
 
   ;;                         (require 'lsp-pyright)
@@ -1606,7 +1709,7 @@ https://docs.astral.sh/ruff/editors/
 
     :hook (python-mode . lsp-deferred)
 
-    :custom
+    ;;:custom
 
     ;; NOTE: Set these if Python 3 is called "python3" on your system!
 
@@ -1614,7 +1717,7 @@ https://docs.astral.sh/ruff/editors/
 
     ;; (dap-python-executable "python3")
 
-    (dap-python-debugger 'debugpy)
+    ; (dap-python-debugger 'debugpy)
 
     ;; :config
 
