@@ -1252,7 +1252,7 @@ https://github.com/xenodium/chatgpt-shell
 ;;enable flyspell in languages comments
 (add-hook 'prog-mode-hook #'flyspell-prog-mode)
 ;;cycle languages
-(setq-default ispell-program-name "aspell")
+(setq-default ispell-program-name (string-trim (shell-command-to-string "which aspell")))
 (let ((langs '("en_GB" "en_US" "castellano")))
   (setq lang-ring (make-ring (length langs)))
   (dolist (elem langs) (ring-insert lang-ring elem)))
@@ -1385,12 +1385,55 @@ Try these commands with =M-x=:
   
 #+end_src
 
-**** COMMENT dap-mode
+**** dap-mode
 
 [[https://emacs-lsp.github.io/dap-mode/][dap-mode]] is an excellent package for bringing rich debugging capabilities to Emacs via the [[https://microsoft.github.io/debug-adapter-protocol/][Debug Adapter Protocol]].  You should check out the [[https://emacs-lsp.github.io/dap-mode/page/configuration/][configuration docs]] to learn how to configure the debugger for your language.  Also make sure to check out the documentation for the debug adapter to see what configuration parameters are available to use for your debug templates!
 
-
 #+begin_src emacs-lisp
+  (use-package dap-mode
+    :hook ((lsp-mode . dap-mode)
+           (lsp-mode . dap-ui-mode))
+    :custom
+    (dap-auto-configure-features '(locals tooltip))    
+    :config
+    ;(setq lsp-enable-dap-auto-configure nil)
+    (require 'dap-lldb)
+    (require 'dap-cpptools)
+    (require 'dap-python)
+
+    :bind (:map dap-mode-map
+                ("C-c d d" . dap-debug)
+                ("C-c d h" . dap-hydra)
+                ("C-c d b" . dap-ui-breakpoints)
+                ("C-c d l" . dap-ui-locals)
+                ("C-c d r" . dap-ui-repl))
+    )
+  ;; (use-package dap-mode
+  ;;   :after lsp-mode
+  ;;   :custom
+  ;;   ;;(lsp-enable-dap-auto-configure nil)
+  ;;   ;; (dap-ui-mode 1)
+  ;;   ;; (dap-auto-configure-features '(tooltip))
+  ;;   (dap-auto-configure-features '(sessions locals breakpoints expressions tooltip))
+  ;;   ;; Enable automatic UI configuration
+  ;;   :config
+  ;;   ;; Set up Node debugging
+  ;;   (dap-ui-mode 1)
+  ;;   (require 'dap-lldb)
+  ;;   (require 'dap-cpptools)
+  ;;   (require 'dap-python)
+  ;;   (dap-cpptools-setup)
+  ;;   :bind (("C-c l d" . dap-hydra))
+  ;;   )
+  (setq dap-python-debugger 'debugpy)
+  ;;(setq dap-auto-configure-features '(sessions locals breakpoints expressions controls))
+
+
+  ;;(define-key dap-mode-map (kbd "C-c l d") 'dap-hydra)
+#+end_src
+
+
+#+begin_src emacs-lisp :tangle no
 
   (use-package dap-mode
     :after lsp-mode
@@ -1708,6 +1751,8 @@ https://docs.astral.sh/ruff/editors/
   (use-package python-mode
 
     :hook (python-mode . lsp-deferred)
+    :bind (:map python-mode-map
+                ("C-c a t" . python-pytest))
 
     ;;:custom
 
@@ -1762,7 +1807,12 @@ https://docs.astral.sh/ruff/editors/
               ("C-c C-n" . numpydoc-generate)))
  #+end_src
 *** Environments
+https://github.com/emacs-lsp/lsp-mode/issues/1290
 
+doing workon inside the project folder and selecting the environment seems to work for now.
+
+not working for automatically detecting environmet, maybe this helps
+https://www.kotaweaver.com/blog/emacs-python-lsp/
 #+begin_src emacs-lisp
   ;; workon home
   ;; (setenv "WORKON_HOME" "~/anaconda3/envs/")
@@ -1791,7 +1841,7 @@ https://docs.astral.sh/ruff/editors/
   ;;         (list (lambda ()
   ;;                 (setq python-shell-interpreter "python"))))
 
-  (defun toggle-python-shell-interpreter ()
+  (defun fac-toggle-python-shell-interpreter ()
     "Toggle `python-shell-interpreter` and `python-shell-interpreter-args` between `python` and `ipython`."
     (interactive)
     (if (string-equal python-shell-interpreter "python")
@@ -1803,7 +1853,8 @@ https://docs.astral.sh/ruff/editors/
         (setq python-shell-interpreter-args "-i")))
     (message "Switched to interpreter: %s with args: %s"
              python-shell-interpreter python-shell-interpreter-args))
-  
+
+  (define-key python-mode-map (kbd "C-c a p") 'fac-toggle-python-shell-interpreter)  
 #+end_src
 
 *** Set_trace

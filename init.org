@@ -1,7 +1,16 @@
 #+title: Emacs Configuration for Linux Machines
 #+PROPERTY: header-args:emacs-lisp :tangle ~/.emacs.d/init.el :mkdirp yes
 
-Run this code block to write the init file and that's all!
+- Tangle this file so that .emacs.d is created and the following init.el file created inside
+#+begin_src emacs-lisp
+  ;; init emacs 
+  (load "~/.emacs.d/init_vars.el")
+  (load "~/.emacs.d/init_setup.el")
+  (put 'upcase-region 'disabled nil)
+#+end_src
+
+- Modify init_vars0.org and save as init_vars.org (variables to be used in setup)
+- Run this code block to write the vars and setup files file and that's all!
 #+begin_src emacs-lisp :results output silent :tangle no
   (org-babel-tangle-file "./init_vars.org")
   (org-babel-tangle-file "./init_setup.org")
@@ -9,9 +18,3 @@ Run this code block to write the init file and that's all!
 #+end_src
 
 
-#+begin_src emacs-lisp
-  ;; init emacs 
-  (load "~/.emacs.d/init_vars.el")
-  (load "~/.emacs.d/init_setup.el")
-  (put 'upcase-region 'disabled nil)
-#+end_src
