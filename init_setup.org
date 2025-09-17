@@ -4,18 +4,15 @@
 ###+SETUPFILE: "./header_setup.org"
 
 * Let the Emacs begin!
-* 
-This is the configuration we've been building in the *Emacs From Scratch* series, now written as an Org Mode document.  This file generates [[file:init.el][init.el]] which can be loaded by Emacs at startup.
+** Refs
 
-*NOTE:* 
-
-*Credits:* 
+Credits:
 
 https://nilsdeppe.com/posts/emacs-c++-ide2
 http://tuhdo.github.io/c-ide.html#sec-2
 http://tuhdo.github.io/emacs-tutor.html#orgheadline63
 https://stackoverflow.com/questions/3855862/setq-and-defvar-in-lisp
-* Tips for Use
+** Tips for Use
 
  - The first time you load your configuration on a new machine, you’ll need to run `M-x all-the-icons-install-fonts` so that mode line icons display correctly.
 
@@ -99,7 +96,7 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
 
 #+BEGIN_SRC emacs-lisp
 
- ;; Automatically tangle our Emacs.org config file when we save it
+ ;; Automatically tangle this  file when we saving it
  (defun efs/org-babel-tangle-config ()
   (when (string-equal (buffer-file-name)
                       (expand-file-name *emacs_config*))
@@ -162,6 +159,42 @@ This snippet adds a hook to =org-mode= buffers so that =efs/org-babel-tangle-con
                   :key "C-c a [number]"
                   :description "Split frame in n buffers")  
   
+#+end_src
+** copy line and file path
+https://gist.github.com/kristianhellquist/3082383
+#+begin_src emacs-lisp
+  ;; (defun copy-current-line-position-to-clipboard ()
+  ;; "Copy current line in file to clipboard as '</path/to/file>::<line-number>'"
+  ;; (interactive)
+  ;; (let ((path-with-line-number
+  ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+  ;;   (x-select-text path-with-line-number)
+  ;;   (message (concat path-with-line-number " copied to clipboard"))))
+  (defun fac/copy-current-line-position-to-clipboard ()
+    "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
+    (interactive)
+    (let ((path-with-line-number
+           (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+      (kill-new path-with-line-number)
+      (message (concat path-with-line-number " copied to clipboard"))))
+
+  ;;(define-key global-map (kbd "C-c C-g C-l") 'fac/copy-current-line-position-to-clipboard)
+  (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
+#+end_src
+
+** copy path to current file
+#+begin_src emacs-lisp
+  (defun er-copy-file-name-to-clipboard ()
+    "Copy the current buffer file name to the clipboard."
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (kill-new filename)
+        (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+  (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
 #+end_src
 
 ** remove quotes
@@ -258,7 +291,6 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
 
 #+end_src
 
-
 * Buffer-Navigation
 #+begin_src emacs-lisp
   (cheatsheet-add :group 'Navigation
@@ -272,48 +304,53 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
                   :description "Scroll up/down by 4")
   (cheatsheet-add :group 'Navigation
                   :key "M-g M-<up,down,left..>"
-                  :description "Move buffers to other windows")  
+                  :description "Move buffers to other windows")
+  (cheatsheet-add :group 'Navigation
+                  :key "C-c C-g g"
+                  :description "Search in google or look in selected region")
+  
 #+end_src
 
 ** Beginning of line
 #+begin_src emacs-lisp
 
-(defun smarter-move-beginning-of-line (arg)
-  "Move point back to indentation of beginning of line.
+  (defun smarter-move-beginning-of-line (arg)
+    "Move point back to indentation of beginning of line.
 
-Move point to the first non-whitespace character on this line.
-If point is already there, move to the beginning of the line.
-Effectively toggle between the first non-whitespace character and
-the beginning of the line.
+  Move point to the first non-whitespace character on this line.
+  If point is already there, move to the beginning of the line.
+  Effectively toggle between the first non-whitespace character and
+  the beginning of the line.
 
-If ARG is not nil or 1, move forward ARG - 1 lines first.  If
-point reaches the beginning or end of the buffer, stop there."
-  (interactive "^p")
-  (setq arg (or arg 1))
+  If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+  point reaches the beginning or end of the buffer, stop there."
+    (interactive "^p")
+    (setq arg (or arg 1))
 
-  ;; Move lines first
-  (when (/= arg 1)
-    (let ((line-move-visual nil))
-      (forward-line (1- arg))))
+    ;; Move lines first
+    (when (/= arg 1)
+      (let ((line-move-visual nil))
+        (forward-line (1- arg))))
 
-  (let ((orig-point (point)))
-    (back-to-indentation)
-    (when (= orig-point (point))
-      (move-beginning-of-line 1))))
+    (let ((orig-point (point)))
+      (back-to-indentation)
+      (when (= orig-point (point))
+        (move-beginning-of-line 1))))
 
-;; remap C-a to `smarter-move-beginning-of-line'
-(global-set-key [remap move-beginning-of-line]
-                'smarter-move-beginning-of-line)
+  ;; remap C-a to `smarter-move-beginning-of-line'
+  (global-set-key [remap move-beginning-of-line]
+                  'smarter-move-beginning-of-line)
 
 
 #+end_src
+
 
 ** Scrollers
 
 #+begin_src emacs-lisp
 
-(global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
-(global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
+  (global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
+  (global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
 
 #+end_src
 
@@ -350,6 +387,20 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+end_src
 * UI Configuration
+#+begin_src emacs-lisp
+  (cheatsheet-add :group 'UI
+                  :key "ztree-diff/dir"
+                  :description "Diff 2 directories or navigate")
+  (cheatsheet-add :group 'UI
+                  :key "C-8 C-9 C-0"
+                  :description "Transparency of buffers")
+  (cheatsheet-add :group 'UI
+                  :key "C-c C-g z"
+                  :description "Load theme")
+  
+#+end_src
+
+
 ** General settings
 #+begin_src emacs-lisp
 
@@ -383,21 +434,21 @@ http://xahlee.info/emacs/emacs/bookmark.html
 #+end_src
 *** Transparency of window
 #+begin_src emacs-lisp
-(defun djcb-opacity-modify (&optional dec)
-  "modify the transparency of the emacs frame; if DEC is t,
-    decrease the transparency, otherwise increase it in 10%-steps"
-  (let* ((alpha-or-nil (frame-parameter nil 'alpha)) ; nil before setting
-         (oldalpha (if alpha-or-nil alpha-or-nil 100))
-         (newalpha (if dec (- oldalpha 10) (+ oldalpha 10))))
-    (when (and (>= newalpha frame-alpha-lower-limit) (<= newalpha 100))
-      (modify-frame-parameters nil (list (cons 'alpha newalpha))))))
+  (defun djcb-opacity-modify (&optional dec)
+    "modify the transparency of the emacs frame; if DEC is t,
+      decrease the transparency, otherwise increase it in 10%-steps"
+    (let* ((alpha-or-nil (frame-parameter nil 'alpha)) ; nil before setting
+           (oldalpha (if alpha-or-nil alpha-or-nil 100))
+           (newalpha (if dec (- oldalpha 10) (+ oldalpha 10))))
+      (when (and (>= newalpha frame-alpha-lower-limit) (<= newalpha 100))
+        (modify-frame-parameters nil (list (cons 'alpha newalpha))))))
 
-;; C-8 will increase opacity (== decrease transparency)
-;; C-9 will decrease opacity (== increase transparency
-;; C-0 will returns the state to normal
-(global-set-key (kbd "C-9") '(lambda()(interactive)(djcb-opacity-modify)))
-(global-set-key (kbd "C-8") '(lambda()(interactive)(djcb-opacity-modify t)))
-(global-set-key (kbd "C-0") '(lambda()(interactive)(modify-frame-parameters nil `((alpha . 100)))))
+  ;; C-8 will increase opacity (== decrease transparency)
+  ;; C-9 will decrease opacity (== increase transparency
+  ;; C-0 will returns the state to normal
+  (global-set-key (kbd "C-9") '(lambda()(interactive)(djcb-opacity-modify)))
+  (global-set-key (kbd "C-8") '(lambda()(interactive)(djcb-opacity-modify t)))
+  (global-set-key (kbd "C-0") '(lambda()(interactive)(modify-frame-parameters nil `((alpha . 100)))))
 
 #+end_src
 
@@ -405,17 +456,17 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-(global-set-key (kbd "C-<") 'shrink-window)
-(global-set-key (kbd "C->") 'enlarge-window)
-(global-set-key (kbd "C-{") 'shrink-window-horizontally)
-(global-set-key (kbd "C-}") 'enlarge-window-horizontally)
+  (global-set-key (kbd "C-<") 'shrink-window)
+  (global-set-key (kbd "C->") 'enlarge-window)
+  (global-set-key (kbd "C-{") 'shrink-window-horizontally)
+  (global-set-key (kbd "C-}") 'enlarge-window-horizontally)
 
 #+end_src
 
 *** Clear terminal buffer
 #+begin_src emacs-lisp
 
-;;(define-key comint-mode-map "\C-c\C-o" #'comint-clear-buffer)
+  ;;(define-key comint-mode-map "\C-c\C-o" #'comint-clear-buffer)
 
 #+end_src
 ** Command Log Mode
@@ -424,7 +475,7 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-(use-package command-log-mode)
+  (use-package command-log-mode)
 
 #+end_src
 
@@ -434,16 +485,13 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-;; ───────────────────────────────────Themes──────────────────────────────────
-;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-;(load-theme 'zenburn)
-;(load-theme 'hc-zenburn t)
+  (use-package doom-themes
+    :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
+    ;; :init (load-theme 'doom-dracula t)
+    :init (load-theme 'doom-one t)
+  )
 
-(use-package doom-themes
-  :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
-  ;; :init (load-theme 'doom-dracula t)
-  :init (load-theme 'doom-one t)
-)
+  (global-set-key (kbd "C-c C-g z") 'counsel-load-theme)
 
 #+end_src
 
@@ -472,11 +520,11 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1))
+  (use-package which-key
+    :init (which-key-mode)
+    :diminish which-key-mode
+    :config
+    (setq which-key-idle-delay 1))
 
 #+end_src
 
@@ -488,34 +536,34 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-    (use-package ivy
-      :diminish
-      :bind (("C-s" . swiper)
-             :map ivy-minibuffer-map
-             ("TAB" . ivy-alt-done)
-             ("C-l" . ivy-alt-done)
-             ("C-j" . ivy-next-line)
-             ("C-k" . ivy-previous-line)
-             :map ivy-switch-buffer-map
-             ("C-k" . ivy-previous-line)
-             ("C-l" . ivy-done)
-             ("C-d" . ivy-switch-buffer-kill)
-             :map ivy-reverse-i-search-map
-             ("C-k" . ivy-previous-line)
-             ("C-d" . ivy-reverse-i-search-kill))
-      :config
-      (ivy-mode 1))
+  (use-package ivy
+    :diminish
+    :bind (("C-s" . swiper)
+           :map ivy-minibuffer-map
+           ("TAB" . ivy-alt-done)
+           ("C-l" . ivy-alt-done)
+           ("C-j" . ivy-next-line)
+           ("C-k" . ivy-previous-line)
+           :map ivy-switch-buffer-map
+           ("C-k" . ivy-previous-line)
+           ("C-l" . ivy-done)
+           ("C-d" . ivy-switch-buffer-kill)
+           :map ivy-reverse-i-search-map
+           ("C-k" . ivy-previous-line)
+           ("C-d" . ivy-reverse-i-search-kill))
+    :config
+    (ivy-mode 1))
 
-    (use-package ivy-rich
-      :init
-      (ivy-rich-mode 1))
+  (use-package ivy-rich
+    :init
+    (ivy-rich-mode 1))
 
-    (use-package counsel
-      :bind (("C-M-j" . 'counsel-switch-buffer)
-             :map minibuffer-local-map
-             ("C-r" . 'counsel-minibuffer-history))
-      :config
-      (counsel-mode 1))
+  (use-package counsel
+    :bind (("C-M-j" . 'counsel-switch-buffer)
+           :map minibuffer-local-map
+           ("C-r" . 'counsel-minibuffer-history))
+    :config
+    (counsel-mode 1))
 
 #+end_src
 
@@ -532,40 +580,40 @@ http://xahlee.info/emacs/emacs/bookmark.html
 ** Centaur-tabs
 
 #+begin_src emacs-lisp
-;; ───────────────────────────────────
-(use-package centaur-tabs
-  :demand
-  ;; :config
-  ;; (centaur-tabs-mode t)
-  :custom
-  (centaur-tabs-gray-out-icons 'buffer)
-  (centaur-tabs-style "rounded")
-  (centaur-tabs-height 36)
-  (centaur-tabs-set-icons t)
-  (centaur-tabs-set-modified-marker t)
-  (centaur-tabs-modified-marker "●")
-  ;(centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
+  ;; ───────────────────────────────────
+  (use-package centaur-tabs
+    :demand
+    ;; :config
+    ;; (centaur-tabs-mode t)
+    :custom
+    (centaur-tabs-gray-out-icons 'buffer)
+    (centaur-tabs-style "rounded")
+    (centaur-tabs-height 36)
+    (centaur-tabs-set-icons t)
+    (centaur-tabs-set-modified-marker t)
+    (centaur-tabs-modified-marker "●")
+    ;(centaur-tabs-buffer-groups-function #'centaur-tabs-projectile-buffer-groups)
 
-  :bind
-  (("<C-next>" . #'centaur-tabs-backward)
-   ("<C-prior>" . #'centaur-tabs-forward))
-   ("C-c C-g a" . #'centaur-tabs-mode))
+    :bind
+    (("<C-next>" . #'centaur-tabs-backward)
+     ("<C-prior>" . #'centaur-tabs-forward))
+     ("C-c C-g a" . #'centaur-tabs-mode))
 #+end_src
 ** Eyebrowse
 
 #+begin_src emacs-lisp
-;; ───────────────────────────────────
-(use-package eyebrowse
-              :diminish eyebrowse-mode
-              :config (progn
-                        (define-key eyebrowse-mode-map (kbd "C-x C-1") 'eyebrowse-switch-to-window-config-1)
-                        (define-key eyebrowse-mode-map (kbd "C-x C-2") 'eyebrowse-switch-to-window-config-2)
-                        (define-key eyebrowse-mode-map (kbd "C-x C-3") 'eyebrowse-switch-to-window-config-3)
-                        (define-key eyebrowse-mode-map (kbd "C-x C-4") 'eyebrowse-switch-to-window-config-4)
-                        (eyebrowse-mode t)
-                        (setq eyebrowse-new-workspace t)))
+  ;; ───────────────────────────────────
+  (use-package eyebrowse
+                :diminish eyebrowse-mode
+                :config (progn
+                          (define-key eyebrowse-mode-map (kbd "C-x C-1") 'eyebrowse-switch-to-window-config-1)
+                          (define-key eyebrowse-mode-map (kbd "C-x C-2") 'eyebrowse-switch-to-window-config-2)
+                          (define-key eyebrowse-mode-map (kbd "C-x C-3") 'eyebrowse-switch-to-window-config-3)
+                          (define-key eyebrowse-mode-map (kbd "C-x C-4") 'eyebrowse-switch-to-window-config-4)
+                          (eyebrowse-mode t)
+                          (setq eyebrowse-new-workspace t)))
 
-(global-set-key (kbd "C-c C-w w") 'ace-window)
+  (global-set-key (kbd "C-c C-w w") 'ace-window)
 
 #+end_src
 
@@ -573,47 +621,47 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-;; ───────────────────────────────────
-;; Undo tree
-(use-package undo-tree)
-(global-undo-tree-mode)
+  ;; ───────────────────────────────────
+  ;; Undo tree
+  (use-package undo-tree)
+  (global-undo-tree-mode)
 
 #+end_src
 
 *** with timestamps
 
 #+begin_src emacs-lisp
-(setq undo-tree-visualizer-timestamps t)
+  (setq undo-tree-visualizer-timestamps t)
 #+end_src
 
 ** fci line
 
 #+begin_src emacs-lisp
 
-;; fci-mode 
-(use-package fill-column-indicator)
+  ;; fci-mode 
+  (use-package fill-column-indicator)
 
-;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
-(defvar sanityinc/fci-mode-suppressed nil)
-(make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
+  ;;;https://emacs.stackexchange.com/questions/147/how-can-i-get-a-ruler-at-column-80
+  (defvar sanityinc/fci-mode-suppressed nil)
+  (make-variable-buffer-local 'sanityinc/fci-mode-suppressed)
 
-(defadvice popup-create (before suppress-fci-mode activate)
-  "Suspend fci-mode while popups are visible"
-  (let ((fci-enabled (sanityinc/fci-enabled-p)))
-    (when fci-enabled
-      (setq sanityinc/fci-mode-suppressed fci-enabled)
-      (turn-off-fci-mode))))
+  (defadvice popup-create (before suppress-fci-mode activate)
+    "Suspend fci-mode while popups are visible"
+    (let ((fci-enabled (sanityinc/fci-enabled-p)))
+      (when fci-enabled
+        (setq sanityinc/fci-mode-suppressed fci-enabled)
+        (turn-off-fci-mode))))
 
-(defadvice popup-delete (after restore-fci-mode activate)
-  "Restore fci-mode when all popups have closed"
-  (when (and sanityinc/fci-mode-suppressed
-	     (null popup-instances))
-    (setq sanityinc/fci-mode-suppressed nil)
-    (turn-on-fci-mode)))
+  (defadvice popup-delete (after restore-fci-mode activate)
+    "Restore fci-mode when all popups have closed"
+    (when (and sanityinc/fci-mode-suppressed
+               (null popup-instances))
+      (setq sanityinc/fci-mode-suppressed nil)
+      (turn-on-fci-mode)))
 
-;(require 'fill-column-indicator)
-(setq fci-rule-column 100)
-(bind-key "C-c C-g l" 'fci-mode)
+  ;(require 'fill-column-indicator)
+  (setq fci-rule-column 100)
+  (bind-key "C-c C-g l" 'fci-mode)
 
 #+end_src
 
@@ -625,11 +673,11 @@ http://xahlee.info/emacs/emacs/bookmark.html
     (dashboard-setup-startup-hook)
     )
 
-  (setq dashboard-items '((recents  . 5)
-                         (bookmarks . 5)
-                         (projects . 5)
-                         (agenda . 5)
-                         (registers . 5))) 
+  (setq dashboard-items '((recents  . 10)
+                          (bookmarks . 5)
+                          (projects . 5)
+                          (agenda . 5)
+                          (registers . 5))) 
 #+end_src
 ** Minimap
 
@@ -639,12 +687,12 @@ http://xahlee.info/emacs/emacs/bookmark.html
     :bind (("C-c C-g m" . minimap-mode))
     )
 #+end_src
-** diffing
+** Ztree: diffing dirs
 #+begin_src emacs-lisp
-(use-package ztree)
+  (use-package ztree)
 #+end_src
-
 ** Perspective
+Adding workspaces
 #+begin_src emacs-lisp
   (use-package perspective
     ;;:bind
@@ -657,185 +705,26 @@ http://xahlee.info/emacs/emacs/bookmark.html
     (persp-mode))
 #+end_src
 
-** Zoom-frm
-#+begin_src emacs-lisp
-  ;; (use-package zoom-frm
-  ;;   )
-#+end_src
-
-* Custom functions
-** copy line and file path
-https://gist.github.com/kristianhellquist/3082383
-#+begin_src emacs-lisp
-  ;; (defun copy-current-line-position-to-clipboard ()
-  ;; "Copy current line in file to clipboard as '</path/to/file>::<line-number>'"
-  ;; (interactive)
-  ;; (let ((path-with-line-number
-  ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
-  ;;   (x-select-text path-with-line-number)
-  ;;   (message (concat path-with-line-number " copied to clipboard"))))
-  (defun fac/copy-current-line-position-to-clipboard ()
-    "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
-    (interactive)
-    (let ((path-with-line-number
-           (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
-      (kill-new path-with-line-number)
-      (message (concat path-with-line-number " copied to clipboard"))))
-
-  ;;(define-key global-map (kbd "C-c C-g C-l") 'fac/copy-current-line-position-to-clipboard)
-  (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
-#+end_src
-
-** copy path to current file
-#+begin_src emacs-lisp
-  (defun er-copy-file-name-to-clipboard ()
-    "Copy the current buffer file name to the clipboard."
-    (interactive)
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (when filename
-        (kill-new filename)
-        (message "Copied buffer file name '%s' to the clipboard." filename))))
-
-  (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
-#+end_src
-
-* System navigation and output
-
-** Dired
-
-https://www.reddit.com/r/emacs/comments/84thzd/what_happened_to_dired_package/
-https://www.emacswiki.org/emacs/DiredReuseDirectoryBuffer
-http://xahlee.info/emacs/emacs/emacs_dired_tips.html
-
-
-#+begin_src emacs-lisp
-
-  (use-package dired
-    :ensure nil
-    :commands (dired dired-jump)
-    :bind (("C-x C-j" . dired-jump))
-    ;; :custom 
-    ;; (dired-listing-switches "-agho --group-directories-first")
-    :config
-    ;; (define-key dired-mode-map
-    ;;   (kbd "B") 'dired-single-up-directory)
-    ;; (define-key dired-mode-map
-    ;;   (kbd "G") 'dired-single-buffer)
-    )
-  (use-package dired
-    :ensure nil
-    :commands (dired dired-jump)
-    :bind (("C-x C-j" . dired-jump))
-    ;; :custom 
-    ;; (dired-listing-switches "-agho --group-directories-first")
-    :config
-    (define-key dired-mode-map (kbd "b") (lambda () (interactive) (find-alternate-file "..")))
-    (define-key dired-mode-map (kbd "z") 'dired-get-size)
-    (define-key dired-mode-map (kbd "C-c h") 'dired-hide-dotfiles-mode)  
-    ;; (define-key dired-mode-map
-    ;;   (kbd "B") 'dired-single-up-directory)
-    ;; (define-key dired-mode-map
-    ;;   (kbd "G") 'dired-single-buffer)
-    )
-
-  (setq dired-dwim-target t)
-  ;; Revert Dired and other buffers
-  (setq global-auto-revert-non-file-buffers t)
-  ;; (use-package dired-single)
-
-  (use-package dired-hide-dotfiles
-    :hook (dired-mode . dired-hide-dotfiles-mode)
-  )
-
-  (defun dired-get-size ()
-    (interactive)
-    (let ((files (dired-get-marked-files)))
-      (with-temp-buffer
-        (apply 'call-process "/usr/bin/du" nil t nil "-sch" files)
-        (message "Size of all marked files: %s"
-                 (progn 
-                   (re-search-backward "\\(^[0-9.,]+[A-Za-z]+\\).*total$")
-                   (match-string 1))))))
-
-  (use-package all-the-icons-dired
-    :hook (dired-mode . all-the-icons-dired-mode))
-
-  ;; (use-package dired+
-  ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
-  ;;  :defer 1
-  ;;  ;; :init
-  ;;  ;; (setq diredp-hide-details-initially-flag nil)
-  ;;  ;; (setq diredp-hide-details-propagate-flag nil)
-
-  ;;  :config
-  ;;  (diredp-toggle-find-file-reuse-dir 1)
-  ;;  )
-
-#+end_src
-
-** Print PDF
-
-#+begin_src emacs-lisp
-
-;; print buffer to pdf
-(require 'ps-print)
-(when (executable-find "ps2pdf")
-  (defun modi/pdf-print-buffer-with-faces (&optional filename)
-    "Print file in the current buffer as pdf, including font, color, and
-underline information.  This command works only if you are using a window system,
-so it has a way to determine color values.
-
-C-u COMMAND prompts user where to save the Postscript file (which is then
-converted to PDF at the same location."
-    (interactive (list (if current-prefix-arg
-                           (ps-print-preprint 4)
-                         (concat (file-name-sans-extension (buffer-file-name))
-                                 ".ps"))))
-    (ps-print-with-faces (point-min) (point-max) filename)
-    (shell-command (concat "ps2pdf " filename))
-    (delete-file filename)
-    (message "Deleted %s" filename)
-    (message "Wrote %s" (concat (file-name-sans-extension filename) ".pdf"))))
-
-#+end_src
-
-** Google
-#+begin_src emacs-lisp
-(defun er-google ()
-  "Google the selected region if any, display a query prompt otherwise."
-  (interactive)
-  (browse-url
-   (concat
-    "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
-    (url-hexify-string (if mark-active
-         (buffer-substring (region-beginning) (region-end))
-	 (read-string "Google: "))))))
- (global-set-key (kbd "C-c C-g g") #'er-google)
-
-#+end_src
-
 * Org Mode
 
 ** Basic Config
 #+begin_src emacs-lisp
 
-(use-package org-bullets
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+  (use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-;; `with-eval-after-load' macro was introduced in Emacs 24.x
-;; In older Emacsen, you can do the same thing with `eval-after-load'
-;; and '(progn ..) form.
-(with-eval-after-load 'org       
-  (setq org-startup-indented t) ; Enable `org-indent-mode' by default
-  (add-hook 'org-mode-hook #'visual-line-mode))
+  ;; `with-eval-after-load' macro was introduced in Emacs 24.x
+  ;; In older Emacsen, you can do the same thing with `eval-after-load'
+  ;; and '(progn ..) form.
+  (with-eval-after-load 'org       
+    (setq org-startup-indented t) ; Enable `org-indent-mode' by default
+    (add-hook 'org-mode-hook #'visual-line-mode))
 
-(setq org-todo-keywords
-      '((sequence "TODO" "INPROGRESS" "|" "DONE")))
+  (setq org-todo-keywords
+        '((sequence "TODO" "INPROGRESS" "|" "DONE")))
 
-;; (setq org-ellipsis " ⤵")
+  ;; (setq org-ellipsis " ⤵")
 #+end_src
 
 ** Contrib
@@ -888,7 +777,7 @@ https://orgmode.org/manual/Code-Evaluation-Security.html
 *** Source block shortcut
 https://emacs.stackexchange.com/questions/12841/quickly-insert-source-blocks-in-org-mode
 #+begin_src emacs-lisp
-(require 'org-tempo)
+  (require 'org-tempo)
 #+end_src
 *** Run async
 Not working, isues here
@@ -927,7 +816,7 @@ https://github.com/xenodium/company-org-block
 - Download JLatexMath in the same folder as .jar file for math
 https://plantuml.com/ascii-math
 #+begin_src emacs-lisp
-(use-package plantuml-mode)
+  (use-package plantuml-mode)
 #+end_src
 
 ** Templates
@@ -1297,9 +1186,9 @@ https://github.com/xenodium/chatgpt-shell
 *** Shell-pop 
 #+begin_src emacs-lisp
 
-(use-package shell-pop
-  :bind (("C-t" . shell-pop))
-)
+  (use-package shell-pop
+    :bind (("C-t" . shell-pop))
+  )
 
 #+end_src
 
@@ -1318,56 +1207,56 @@ https://github.com/xenodium/chatgpt-shell
 
 #+begin_src emacs-lisp
 
-;;enable flyspell in text mode (and derived modes)
-(add-hook 'text-mode-hook 'flyspell-mode)
-;;enable flyspell in languages comments
-(add-hook 'prog-mode-hook #'flyspell-prog-mode)
-;;cycle languages
-(setq-default ispell-program-name (string-trim (shell-command-to-string "which aspell")))
-(let ((langs '("en_GB" "en_US" "castellano")))
-  (setq lang-ring (make-ring (length langs)))
-  (dolist (elem langs) (ring-insert lang-ring elem)))
+  ;;enable flyspell in text mode (and derived modes)
+  (add-hook 'text-mode-hook 'flyspell-mode)
+  ;;enable flyspell in languages comments
+  (add-hook 'prog-mode-hook #'flyspell-prog-mode)
+  ;;cycle languages
+  (setq-default ispell-program-name (string-trim (shell-command-to-string "which aspell")))
+  (let ((langs '("en_GB" "en_US" "castellano")))
+    (setq lang-ring (make-ring (length langs)))
+    (dolist (elem langs) (ring-insert lang-ring elem)))
 
-(defun cycle-ispell-languages ()
-  (interactive)
-  (let ((lang (ring-ref lang-ring -1)))
-    (ring-insert lang-ring lang)
-    (ispell-change-dictionary lang)))
+  (defun cycle-ispell-languages ()
+    (interactive)
+    (let ((lang (ring-ref lang-ring -1)))
+      (ring-insert lang-ring lang)
+      (ispell-change-dictionary lang)))
 
-(global-set-key [f6] 'cycle-ispell-languages)
+  (global-set-key [f6] 'cycle-ispell-languages)
 
 #+end_src
 
 *** Code folding
 
 #+begin_src emacs-lisp
-(add-hook 'prog-mode-hook (lambda () (hs-minor-mode 1)))
+  (add-hook 'prog-mode-hook (lambda () (hs-minor-mode 1)))
 
-(defun hs-hide-all-comments ()
-  "Hide all top level blocks, if they are comments, displaying only first line.
-Move point to the beginning of the line, and run the normal hook
-`hs-hide-hook'.  See documentation for `run-hooks'."
-  (interactive)
-  (hs-life-goes-on
-   (save-excursion
-     (unless hs-allow-nesting
-       (hs-discard-overlays (point-min) (point-max)))
-     (goto-char (point-min))
-     (let ((spew (make-progress-reporter "Hiding all comment blocks..."
-                                         (point-min) (point-max)))
-           (re (concat "\\(" hs-c-start-regexp "\\)")))
-       (while (re-search-forward re (point-max) t)
-         (if (match-beginning 1)
-           ;; found a comment, probably
-           (let ((c-reg (hs-inside-comment-p)))
-             (when (and c-reg (car c-reg))
-               (if (> (count-lines (car c-reg) (nth 1 c-reg)) 1)
-                   (hs-hide-block-at-point t c-reg)
-                 (goto-char (nth 1 c-reg))))))
-         (progress-reporter-update spew (point)))
-       (progress-reporter-done spew)))
-   (beginning-of-line)
-   (run-hooks 'hs-hide-hook)))
+  (defun hs-hide-all-comments ()
+    "Hide all top level blocks, if they are comments, displaying only first line.
+  Move point to the beginning of the line, and run the normal hook
+  `hs-hide-hook'.  See documentation for `run-hooks'."
+    (interactive)
+    (hs-life-goes-on
+     (save-excursion
+       (unless hs-allow-nesting
+         (hs-discard-overlays (point-min) (point-max)))
+       (goto-char (point-min))
+       (let ((spew (make-progress-reporter "Hiding all comment blocks..."
+                                           (point-min) (point-max)))
+             (re (concat "\\(" hs-c-start-regexp "\\)")))
+         (while (re-search-forward re (point-max) t)
+           (if (match-beginning 1)
+             ;; found a comment, probably
+             (let ((c-reg (hs-inside-comment-p)))
+               (when (and c-reg (car c-reg))
+                 (if (> (count-lines (car c-reg) (nth 1 c-reg)) 1)
+                     (hs-hide-block-at-point t c-reg)
+                   (goto-char (nth 1 c-reg))))))
+           (progress-reporter-update spew (point)))
+         (progress-reporter-done spew)))
+     (beginning-of-line)
+     (run-hooks 'hs-hide-hook)))
 
 #+end_src
 
@@ -1612,22 +1501,22 @@ We also use [[https://github.com/sebastiencs/company-box][company-box]] to furth
 *** Compilation
 #+begin_src emacs-lisp
 
-(use-package smart-compile
-  :bind (("C-c C-g c" . smart-compile))
-)
+  (use-package smart-compile
+    :bind (("C-c C-g c" . smart-compile))
+    )
 
 #+end_src
 *** csv
 #+begin_src emacs-lisp
-(use-package csv-mode
-)
+  (use-package csv-mode
+  )
 #+end_src
 *** yasnippet
 #+begin_src emacs-lisp
-    ;; snippets and snippet expansion
-    (use-package yasnippet
-    :init
-    (yas-global-mode 1))
+  ;; snippets and snippet expansion
+  (use-package yasnippet
+  :init
+  (yas-global-mode 1))
 #+end_src
 ** REPL
 https://github.com/kaz-yos/eval-in-repl
@@ -1691,8 +1580,8 @@ https://github.com/kaz-yos/eval-in-repl
 
 #+begin_src emacs-lisp
 
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
 
 #+end_src
 
@@ -1724,7 +1613,7 @@ https://github.com/kaz-yos/eval-in-repl
 ** Json
 
 #+begin_src emacs-lisp
-(use-package json-mode)
+  (use-package json-mode)
 #+end_src
 
 ** YAML
@@ -1745,52 +1634,15 @@ https://github.com/kaz-yos/eval-in-repl
 
 ** Python
 https://andrewfavia.dev/posts/emacs-as-python-ide/
-*** COMMENT Conda
-#+begin_src emacs-lisp
-  (use-package conda
-  :config (progn
-            (conda-env-initialize-interactive-shells)
-            (conda-env-initialize-eshell)
-            ;(conda-env-autoactivate-mode t)
-            (setq conda-env-home-directory (expand-file-name "~/.conda/"))
-            (custom-set-variables '(conda-anaconda-home "/Users/acea/opt/anaconda3/"))))
 
-#+end_src
 *** Notebook
  #+begin_src emacs-lisp
    ;; ───────────────────────────────────
    ;; Notebook
-   (use-package ein)
+   ;; (use-package ein)
    ;;(require 'ein)
    ;;(require 'ein-notebook)
 
- #+end_src
-*** COMMENT Elpy
- #+begin_src emacs-lisp
-
-   ;; ───────────────────────────────────
-   (use-package elpy
-     :init
-     (elpy-enable))
-
-   ;; Enable Flycheck
-   ;; (when (require 'flycheck nil t)
-
-   ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-
-   ;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
-
-   (when (load "flycheck" t t)
-   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-   (add-hook 'elpy-mode-hook 'flycheck-mode))
-
-   ;;(setq flycheck-flake8rc "~/.config/flake8/setup.cfg")
-   ;;(setq flycheck-pylintrc "~/.config/flake8/.pylintrc")
-
-  (setq elpy-rpc-backend "jedi")
-  (setq elpy-rpc-virtualenv-path 'current)
-                                          ;(setq exec-path (append exec-path '("/media/alvarocea/work/Programs/anaconda3/envs/sharpy_env/bin")))
-   
  #+end_src
 
 *** LSP & Dap
@@ -1872,10 +1724,10 @@ https://docs.astral.sh/ruff/editors/
 
 *** docstrings
  #+begin_src emacs-lisp
-(use-package numpydoc
-  :ensure t
-  :bind (:map python-mode-map
-              ("C-c C-n" . numpydoc-generate)))
+   (use-package numpydoc
+     :ensure t
+     :bind (:map python-mode-map
+                 ("C-c C-n" . numpydoc-generate)))
  #+end_src
 *** Environments
 https://github.com/emacs-lsp/lsp-mode/issues/1290
@@ -2005,12 +1857,12 @@ https://github.com/wbolster/emacs-python-pytest
 *** Debugger
 
 #+begin_src emacs-lisp
-(setq
- ;; use gdb-many-windows by default
- gdb-many-windows t
- ;; Non-nil means display source file containing the main routine at startup
- gdb-show-main t
- )
+  (setq
+   ;; use gdb-many-windows by default
+   gdb-many-windows t
+   ;; Non-nil means display source file containing the main routine at startup
+   gdb-show-main t
+   )
 #+end_src
 
 
@@ -2103,10 +1955,10 @@ This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to desig
 * Custom file
 
 #+begin_src emacs-lisp
-(setq custom-file "~/.emacs.d/custom-file.el")
-(load-file custom-file)
-(put 'erase-buffer 'disabled nil)
-;;(put 'dired-find-alternate-file 'disabled nil)
-(put 'downcase-region 'disabled nil)
+  (setq custom-file "~/.emacs.d/custom-file.el")
+  (load-file custom-file)
+  (put 'erase-buffer 'disabled nil)
+  ;;(put 'dired-find-alternate-file 'disabled nil)
+  (put 'downcase-region 'disabled nil)
 #+end_src
 
