@@ -258,8 +258,44 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
 
 #+end_src
 
+** copy line and file path
+https://gist.github.com/kristianhellquist/3082383
+#+begin_src emacs-lisp
+  ;; (defun copy-current-line-position-to-clipboard ()
+  ;; "Copy current line in file to clipboard as '</path/to/file>::<line-number>'"
+  ;; (interactive)
+  ;; (let ((path-with-line-number
+  ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+  ;;   (x-select-text path-with-line-number)
+  ;;   (message (concat path-with-line-number " copied to clipboard"))))
+  (defun fac/copy-current-line-position-to-clipboard ()
+    "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
+    (interactive)
+    (let ((path-with-line-number
+           (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
+      (kill-new path-with-line-number)
+      (message (concat path-with-line-number " copied to clipboard"))))
 
-* Buffer-Navigation
+  ;;(define-key global-map (kbd "C-c C-g C-l") 'fac/copy-current-line-position-to-clipboard)
+  (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
+#+end_src
+
+** copy path to current file
+#+begin_src emacs-lisp
+  (defun er-copy-file-name-to-clipboard ()
+    "Copy the current buffer file name to the clipboard."
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (kill-new filename)
+        (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+  (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
+#+end_src
+
+* System navigation
 #+begin_src emacs-lisp
   (cheatsheet-add :group 'Navigation
                   :key "C-a"
@@ -275,35 +311,96 @@ https://baty.blog/2022/converting-markdown-to-org-mode-syntax-in-buffer
                   :description "Move buffers to other windows")  
 #+end_src
 
-** Beginning of line
+** Dired
+
+https://www.reddit.com/r/emacs/comments/84thzd/what_happened_to_dired_package/
+https://www.emacswiki.org/emacs/DiredReuseDirectoryBuffer
+http://xahlee.info/emacs/emacs/emacs_dired_tips.html
+
+
 #+begin_src emacs-lisp
 
-(defun smarter-move-beginning-of-line (arg)
-  "Move point back to indentation of beginning of line.
+  (use-package dired
+    :ensure nil
+    :commands (dired dired-jump)
+    :bind (("C-x C-j" . dired-jump))
+    ;; :custom 
+    ;; (dired-listing-switches "-agho --group-directories-first")
+    :config
+    (define-key dired-mode-map (kbd "b") (lambda () (interactive) (find-alternate-file "..")))
+    (define-key dired-mode-map (kbd "z") 'dired-get-size)
+    (define-key dired-mode-map (kbd "C-c h") 'dired-hide-dotfiles-mode)  
+    ;; (define-key dired-mode-map
+    ;;   (kbd "B") 'dired-single-up-directory)
+    ;; (define-key dired-mode-map
+    ;;   (kbd "G") 'dired-single-buffer)
+    )
 
-Move point to the first non-whitespace character on this line.
-If point is already there, move to the beginning of the line.
-Effectively toggle between the first non-whitespace character and
-the beginning of the line.
+  (setq dired-dwim-target t) ;; copy from one dired buffer to another
+  ;; Revert Dired and other buffers
+  (setq global-auto-revert-non-file-buffers t)
+  ;; (use-package dired-single)
 
-If ARG is not nil or 1, move forward ARG - 1 lines first.  If
-point reaches the beginning or end of the buffer, stop there."
-  (interactive "^p")
-  (setq arg (or arg 1))
+  (use-package dired-hide-dotfiles
+    :hook (dired-mode . dired-hide-dotfiles-mode)
+  )
 
-  ;; Move lines first
-  (when (/= arg 1)
-    (let ((line-move-visual nil))
-      (forward-line (1- arg))))
+  (defun dired-get-size ()
+    (interactive)
+    (let ((files (dired-get-marked-files)))
+      (with-temp-buffer
+        (apply 'call-process "/usr/bin/du" nil t nil "-sch" files)
+        (message "Size of all marked files: %s"
+                 (progn 
+                   (re-search-backward "\\(^[0-9.,]+[A-Za-z]+\\).*total$")
+                   (match-string 1))))))
 
-  (let ((orig-point (point)))
-    (back-to-indentation)
-    (when (= orig-point (point))
-      (move-beginning-of-line 1))))
+  (use-package all-the-icons-dired
+    :hook (dired-mode . all-the-icons-dired-mode))
 
-;; remap C-a to `smarter-move-beginning-of-line'
-(global-set-key [remap move-beginning-of-line]
-                'smarter-move-beginning-of-line)
+  ;; (use-package dired+
+  ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
+  ;;  :defer 1
+  ;;  ;; :init
+  ;;  ;; (setq diredp-hide-details-initially-flag nil)
+  ;;  ;; (setq diredp-hide-details-propagate-flag nil)
+
+  ;;  :config
+  ;;  (diredp-toggle-find-file-reuse-dir 1)
+  ;;  )
+
+#+end_src
+
+** Beginning of line
+Move to beginning of line or beginning of code
+#+begin_src emacs-lisp
+
+  (defun smarter-move-beginning-of-line (arg)
+    "Move point back to indentation of beginning of line.
+
+  Move point to the first non-whitespace character on this line.
+  If point is already there, move to the beginning of the line.
+  Effectively toggle between the first non-whitespace character and
+  the beginning of the line.
+
+  If ARG is not nil or 1, move forward ARG - 1 lines first.  If
+  point reaches the beginning or end of the buffer, stop there."
+    (interactive "^p")
+    (setq arg (or arg 1))
+
+    ;; Move lines first
+    (when (/= arg 1)
+      (let ((line-move-visual nil))
+        (forward-line (1- arg))))
+
+    (let ((orig-point (point)))
+      (back-to-indentation)
+      (when (= orig-point (point))
+        (move-beginning-of-line 1))))
+
+  ;; remap C-a to `smarter-move-beginning-of-line'
+  (global-set-key [remap move-beginning-of-line]
+                  'smarter-move-beginning-of-line)
 
 
 #+end_src
@@ -312,8 +409,8 @@ point reaches the beginning or end of the buffer, stop there."
 
 #+begin_src emacs-lisp
 
-(global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
-(global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
+  (global-set-key "\M--"  (lambda () (interactive) (scroll-up   4)) )
+  (global-set-key "\M-+"  (lambda () (interactive) (scroll-down 4)) )
 
 #+end_src
 
@@ -331,7 +428,7 @@ point reaches the beginning or end of the buffer, stop there."
 
 #+end_src
 
-* Bookmarks
+** Bookmarks
 
 #+begin_src emacs-lisp
   (cheatsheet-add :group 'Navigation
@@ -349,6 +446,89 @@ http://xahlee.info/emacs/emacs/bookmark.html
   ;; (switch-to-buffer "*Bookmark List*")
 
 #+end_src
+** ibuffer
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+#+end_src
+** avy
+#+begin_src emacs-lisp
+  ;; Suggested bindings from avy github docs  
+  (global-set-key (kbd "C->") 'avy-goto-char)  
+  (global-set-key (kbd "C-<") 'avy-goto-char-2)  
+  (global-set-key (kbd "M-g f") 'avy-goto-line)  
+  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
+  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
+#+end_src
+** Move between windows
+
+https://www.emacswiki.org/emacs/WindMove
+
+#+begin_src emacs-lisp
+
+  ;; Move between windows: shit+arrows
+  (when (fboundp 'windmove-default-keybindings)
+    (windmove-default-keybindings))
+
+
+  ;; Make windmove work in Org mode:
+  (add-hook 'org-shiftup-final-hook 'windmove-up)
+  (add-hook 'org-shiftleft-final-hook 'windmove-left)
+  (add-hook 'org-shiftdown-final-hook 'windmove-down)
+  (add-hook 'org-shiftright-final-hook 'windmove-right)
+
+  ;; (windmove-default-keybindings 'control)
+#+end_src
+
+** C-c C-g
+#+begin_src emacs-lisp
+
+  (defun open-init-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *emacs_config*))
+  (bind-key "C-c C-g e" #'open-init-file)
+
+  (defun open-bash-file ()
+    "Open this very file."
+    (interactive)
+    (find-file *bash*))
+  (bind-key "C-c C-g b" #'open-bash-file)
+
+  (bind-key "C-c C-g n" 'display-line-numbers-mode)
+
+#+end_src
+
+** Hydra
+
+This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
+
+#+begin_src emacs-lisp
+
+  (use-package hydra)
+
+  (defhydra hydra-text-scale (:timeout 4)
+    "scale text"
+    ("j" text-scale-increase "in")
+    ("k" text-scale-decrease "out")
+    ("f" nil "finished" :exit t))
+
+#+end_src
+
+** Google
+#+begin_src emacs-lisp
+  (defun er-google ()
+    "Google the selected region if any, display a query prompt otherwise."
+    (interactive)
+    (browse-url
+     (concat
+      "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
+      (url-hexify-string (if mark-active
+           (buffer-substring (region-beginning) (region-end))
+  	 (read-string "Google: "))))))
+  (global-set-key (kbd "C-c C-g g") #'er-google)
+
+#+end_src
+
 * UI Configuration
 ** General settings
 #+begin_src emacs-lisp
@@ -405,10 +585,10 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-(global-set-key (kbd "C-<") 'shrink-window)
-(global-set-key (kbd "C->") 'enlarge-window)
-(global-set-key (kbd "C-{") 'shrink-window-horizontally)
-(global-set-key (kbd "C-}") 'enlarge-window-horizontally)
+  (global-set-key (kbd "C-<") 'shrink-window)
+  (global-set-key (kbd "C->") 'enlarge-window)
+  (global-set-key (kbd "C-{") 'shrink-window-horizontally)
+  (global-set-key (kbd "C-}") 'enlarge-window-horizontally)
 
 #+end_src
 
@@ -418,6 +598,7 @@ http://xahlee.info/emacs/emacs/bookmark.html
 ;;(define-key comint-mode-map "\C-c\C-o" #'comint-clear-buffer)
 
 #+end_src
+
 ** Command Log Mode
 
 [[https://github.com/lewang/command-log-mode][command-log-mode]] is useful for displaying a panel showing each key binding you use in a panel on the right side of the frame.
@@ -434,16 +615,16 @@ http://xahlee.info/emacs/emacs/bookmark.html
 
 #+begin_src emacs-lisp
 
-;; ───────────────────────────────────Themes──────────────────────────────────
-;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-;(load-theme 'zenburn)
-;(load-theme 'hc-zenburn t)
+  ;; ───────────────────────────────────Themes──────────────────────────────────
+  ;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+  ;(load-theme 'zenburn)
+  ;(load-theme 'hc-zenburn t)
 
-(use-package doom-themes
-  :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
-  ;; :init (load-theme 'doom-dracula t)
-  :init (load-theme 'doom-one t)
-)
+  (use-package doom-themes
+    :preface (defvar region-fg nil) ; this prevents a weird bug with doom themes
+    ;; :init (load-theme 'doom-dracula t)
+    :init (load-theme 'doom-one t)
+  )
 
 #+end_src
 
@@ -641,7 +822,7 @@ http://xahlee.info/emacs/emacs/bookmark.html
 #+end_src
 ** diffing
 #+begin_src emacs-lisp
-(use-package ztree)
+  (use-package ztree)
 #+end_src
 
 ** Perspective
@@ -655,153 +836,6 @@ http://xahlee.info/emacs/emacs/bookmark.html
     (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
     :init
     (persp-mode))
-#+end_src
-
-** Zoom-frm
-#+begin_src emacs-lisp
-  ;; (use-package zoom-frm
-  ;;   )
-#+end_src
-
-* Custom functions
-** copy line and file path
-https://gist.github.com/kristianhellquist/3082383
-#+begin_src emacs-lisp
-  ;; (defun copy-current-line-position-to-clipboard ()
-  ;; "Copy current line in file to clipboard as '</path/to/file>::<line-number>'"
-  ;; (interactive)
-  ;; (let ((path-with-line-number
-  ;;        (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
-  ;;   (x-select-text path-with-line-number)
-  ;;   (message (concat path-with-line-number " copied to clipboard"))))
-  (defun fac/copy-current-line-position-to-clipboard ()
-    "Copy current line in file to clipboard as '</path/to/file>::<line-number>'."
-    (interactive)
-    (let ((path-with-line-number
-           (concat (buffer-file-name) "::" (number-to-string (line-number-at-pos)))))
-      (kill-new path-with-line-number)
-      (message (concat path-with-line-number " copied to clipboard"))))
-
-  ;;(define-key global-map (kbd "C-c C-g C-l") 'fac/copy-current-line-position-to-clipboard)
-  (define-key global-map (kbd "C-c C-g C-l") 'org-store-link)
-#+end_src
-
-** copy path to current file
-#+begin_src emacs-lisp
-  (defun er-copy-file-name-to-clipboard ()
-    "Copy the current buffer file name to the clipboard."
-    (interactive)
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (when filename
-        (kill-new filename)
-        (message "Copied buffer file name '%s' to the clipboard." filename))))
-
-  (define-key global-map (kbd "C-c C-g C-f") 'er-copy-file-name-to-clipboard)
-#+end_src
-
-* System navigation and output
-
-** Dired
-
-https://www.reddit.com/r/emacs/comments/84thzd/what_happened_to_dired_package/
-https://www.emacswiki.org/emacs/DiredReuseDirectoryBuffer
-http://xahlee.info/emacs/emacs/emacs_dired_tips.html
-
-
-#+begin_src emacs-lisp
-
-  (use-package dired
-    :ensure nil
-    :commands (dired dired-jump)
-    :bind (("C-x C-j" . dired-jump))
-    ;; :custom 
-    ;; (dired-listing-switches "-agho --group-directories-first")
-    :config
-    (define-key dired-mode-map (kbd "b") (lambda () (interactive) (find-alternate-file "..")))
-    (define-key dired-mode-map (kbd "z") 'dired-get-size)
-    (define-key dired-mode-map (kbd "C-c h") 'dired-hide-dotfiles-mode)  
-    ;; (define-key dired-mode-map
-    ;;   (kbd "B") 'dired-single-up-directory)
-    ;; (define-key dired-mode-map
-    ;;   (kbd "G") 'dired-single-buffer)
-    )
-
-  (setq dired-dwim-target t) ;; copy from one dired buffer to another
-  ;; Revert Dired and other buffers
-  (setq global-auto-revert-non-file-buffers t)
-  ;; (use-package dired-single)
-
-  (use-package dired-hide-dotfiles
-    :hook (dired-mode . dired-hide-dotfiles-mode)
-  )
-
-  (defun dired-get-size ()
-    (interactive)
-    (let ((files (dired-get-marked-files)))
-      (with-temp-buffer
-        (apply 'call-process "/usr/bin/du" nil t nil "-sch" files)
-        (message "Size of all marked files: %s"
-                 (progn 
-                   (re-search-backward "\\(^[0-9.,]+[A-Za-z]+\\).*total$")
-                   (match-string 1))))))
-
-  (use-package all-the-icons-dired
-    :hook (dired-mode . all-the-icons-dired-mode))
-
-  ;; (use-package dired+
-  ;;  :quelpa (dired+ :fetcher url :url "https://www.emacswiki.org/emacs/download/dired+.el")
-  ;;  :defer 1
-  ;;  ;; :init
-  ;;  ;; (setq diredp-hide-details-initially-flag nil)
-  ;;  ;; (setq diredp-hide-details-propagate-flag nil)
-
-  ;;  :config
-  ;;  (diredp-toggle-find-file-reuse-dir 1)
-  ;;  )
-
-#+end_src
-
-** Print PDF
-
-#+begin_src emacs-lisp
-
-;; print buffer to pdf
-(require 'ps-print)
-(when (executable-find "ps2pdf")
-  (defun modi/pdf-print-buffer-with-faces (&optional filename)
-    "Print file in the current buffer as pdf, including font, color, and
-underline information.  This command works only if you are using a window system,
-so it has a way to determine color values.
-
-C-u COMMAND prompts user where to save the Postscript file (which is then
-converted to PDF at the same location."
-    (interactive (list (if current-prefix-arg
-                           (ps-print-preprint 4)
-                         (concat (file-name-sans-extension (buffer-file-name))
-                                 ".ps"))))
-    (ps-print-with-faces (point-min) (point-max) filename)
-    (shell-command (concat "ps2pdf " filename))
-    (delete-file filename)
-    (message "Deleted %s" filename)
-    (message "Wrote %s" (concat (file-name-sans-extension filename) ".pdf"))))
-
-#+end_src
-
-** Google
-#+begin_src emacs-lisp
-(defun er-google ()
-  "Google the selected region if any, display a query prompt otherwise."
-  (interactive)
-  (browse-url
-   (concat
-    "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
-    (url-hexify-string (if mark-active
-         (buffer-substring (region-beginning) (region-end))
-	 (read-string "Google: "))))))
- (global-set-key (kbd "C-c C-g g") #'er-google)
-
 #+end_src
 
 * Org Mode
@@ -926,7 +960,7 @@ https://emacs.stackexchange.com/questions/63875/emacs-org-mode-shortcut-to-creat
   ;;   add-to-list 'org-structure-template-alist '("i" . "src emacs-elisp")))
   ;;   )
 #+end_src
-** COMMENT org-pdftools
+** org-pdftools
 To automatically build links to pdfs pages
 #+begin_src emacs-lisp
   ;; (use-package org-noter
@@ -1220,15 +1254,23 @@ sudo apt install pdf2svg
   (add-hook 'dired-mode-hook 'org-download-enable)
 #+end_src
 
-** COMMENT python notebook
-use-package wont work, git clone to .emacs.d/repos
-https://github.com/jkitchin/ox-ipynb
+* Pdf tools
 #+begin_src emacs-lisp
-  ;; (use-package ox-ipynb
-  ;;   )
-  (add-to-list 'load-path "~/.emacs.d/repos/ox-ipynb")
-  (require 'ox-ipynb)
-  (setq ox-ipynb-preprocess-hook '((lambda () (org-ref-csl-preprocess-buffer 'html))))
+
+  (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs))
+  (setq revert-without-query '(".pdf"))
+
+  (use-package pdf-tools
+     ;;:pin manual ;; manually update
+     :config
+     ;; initialise
+     (pdf-tools-install)
+     ;; open pdfs scaled to fit width
+     (setq-default pdf-view-display-size 'fit-width)
+     ;; use normal isearch
+     (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+     :custom
+     (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
 #+end_src
 
 * LLMs
@@ -1258,26 +1300,8 @@ https://github.com/xenodium/chatgpt-shell
    )
 
   (use-package ob-chatgpt-shell)
-
-#+end_src
-
-* Pdf tools
-#+begin_src emacs-lisp
-
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . emacs))
-  (setq revert-without-query '(".pdf"))
-
-  (use-package pdf-tools
-     ;;:pin manual ;; manually update
-     :config
-     ;; initialise
-     (pdf-tools-install)
-     ;; open pdfs scaled to fit width
-     (setq-default pdf-view-display-size 'fit-width)
-     ;; use normal isearch
-     (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
-     :custom
-     (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
+  (global-set-key (kbd "C-c C-g C-c") 'chatgpt-shell)
+  
 #+end_src
 
 * Development
@@ -1975,6 +1999,7 @@ https://github.com/wbolster/emacs-python-pytest
 
 #+begin_src emacs-lisp
 
+  (use-package srefactor)
     ;; tags for code navigation
     ;; (use-package ggtags
     ;; :config
@@ -1993,14 +2018,13 @@ https://github.com/wbolster/emacs-python-pytest
 *** Debugger
 
 #+begin_src emacs-lisp
-(setq
- ;; use gdb-many-windows by default
- gdb-many-windows t
- ;; Non-nil means display source file containing the main routine at startup
- gdb-show-main t
- )
+  (setq
+   ;; use gdb-many-windows by default
+   gdb-many-windows t
+   ;; Non-nil means display source file containing the main routine at startup
+   gdb-show-main t
+   )
 #+end_src
-
 
 *** .inl files
 #+begin_src emacs-lisp
@@ -2011,82 +2035,12 @@ https://github.com/wbolster/emacs-python-pytest
 
 https://github.com/alexluigit/dirvish
 
-** ibuffer
+** Cmake
+pip install cmake-language-server to install cmake lsp 
 #+begin_src emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (use-package cmake-mode
+    )
 #+end_src
-
-** avy
-
-#+begin_src emacs-lisp
-  ;; Suggested bindings from avy github docs  
-  (global-set-key (kbd "C-`") 'avy-goto-char)  
-  (global-set-key (kbd "C-~") 'avy-goto-char-2)  
-  (global-set-key (kbd "M-g f") 'avy-goto-line)  
-  (global-set-key (kbd "M-g w") 'avy-goto-word-1)  
-  (global-set-key (kbd "M-g e") 'avy-goto-word-0)
-#+end_src
-
-** Chatgpt
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-c C-g C-c") 'chatgpt-shell)  
-#+end_src
-
-** Move between windows
-
-https://www.emacswiki.org/emacs/WindMove
-
-#+begin_src emacs-lisp
-
-  ;; Move between windows: shit+arrows
-  (when (fboundp 'windmove-default-keybindings)
-    (windmove-default-keybindings))
-
-
-  ;; Make windmove work in Org mode:
-  (add-hook 'org-shiftup-final-hook 'windmove-up)
-  (add-hook 'org-shiftleft-final-hook 'windmove-left)
-  (add-hook 'org-shiftdown-final-hook 'windmove-down)
-  (add-hook 'org-shiftright-final-hook 'windmove-right)
-
-  ;; (windmove-default-keybindings 'control)
-#+end_src
-
-** C-c C-g
-#+begin_src emacs-lisp
-
-  (defun open-init-file ()
-    "Open this very file."
-    (interactive)
-    (find-file *emacs_config*))
-  (bind-key "C-c C-g e" #'open-init-file)
-
-  (defun open-bash-file ()
-    "Open this very file."
-    (interactive)
-    (find-file *bash*))
-  (bind-key "C-c C-g b" #'open-bash-file)
-
-  (bind-key "C-c C-g n" 'display-line-numbers-mode)
-
-#+end_src
-
-** Hydra
-
-This is an example of using [[https://github.com/abo-abo/hydra][Hydra]] to design a transient key binding for quickly adjusting the scale of the text on screen.  We define a hydra that is bound to =C-s t s= and, once activated, =j= and =k= increase and decrease the text scale.  You can press any other key (or =f= specifically) to exit the transient key map.
-
-#+begin_src emacs-lisp
-
-  ;; (use-package hydra)
-
-  ;; (defhydra hydra-text-scale (:timeout 4)
-  ;;   "scale text"
-  ;;   ("j" text-scale-increase "in")
-  ;;   ("k" text-scale-decrease "out")
-  ;;   ("f" nil "finished" :exit t))
-
-#+end_src
-
 
 * Custom file
 
